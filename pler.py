@@ -7,7 +7,7 @@ from telethon.tl.types import ChannelParticipantAdmin
 from telethon.tl.types import ChannelParticipantCreator
 from telethon.tl.functions.channels import GetParticipantRequest
 from telethon.errors import UserNotParticipantError
-from config import *
+from config import API_ID, API_HASH, TOKEN
 
 logging.basicConfig(
     level=logging.INFO,
@@ -45,6 +45,38 @@ async def help(event):
     )
   )
   
+  
+@kntl.on(events.CallbackQuery(data=b'payment'))
+async def payment_callback(event):
+    text = (
+        "💳 **Silahkan lakukan pembayaran melalui E-Wallet Dana Berikut:**\n\n"
+        "📱 Dana: `081234567890`\n"
+        "👤 Atas Nama: *Dana*"
+    )
+
+    await event.edit(
+        text,
+        buttons=[
+            [Button.url("✅ Konfirmasi Pembayaran", "t.me/kagebunshiiin")],
+            [Button.inline("⬅️ Kembali", b'back_to_menu')]
+        ]
+    )
+
+
+@kntl.on(events.CallbackQuery(data=b'back_to_menu'))
+async def back_to_menu(event):
+    helptext = "**Ada 2 Mode Tag All Cok, Kalo /tagall emot sange + nama user. kalo /all itu random emote tanpa nama user.**"
+    await event.edit(
+        helptext,
+        buttons=[
+            [Button.url('Owner', 't.me/kagebunshiiin')],
+            [Button.url('Support', 't.me/suportkage'),
+             Button.url('Channel', 't.me/kagestore69')],
+            [Button.inline('Payment', b'payment')]
+        ]
+    )
+
+
 @kntl.on(events.NewMessage(pattern="^/tagall ?(.*)"))
 async def mentionall(event):
   chat_id = event.chat_id
@@ -81,7 +113,7 @@ async def mentionall(event):
   elif event.is_reply:
     mode = "balas"
     msg = await event.get_reply_message()
-    if msg == None:
+    if msg is None:
         return await event.respond("**Si anjeng dibilang kasih pesan !!**")
   else:
     return await event.respond("**Si anjeng dibilang kasih pesan !!**")
@@ -90,7 +122,7 @@ async def mentionall(event):
   usrnum = 0
   usrtxt = ''
   async for usr in kntl.iter_participants(chat_id):
-    if not chat_id in spam_chats:
+    if not chat_id or chat_id not in spam_chats:
       break
     usrnum += 1
     usrtxt += f"🥵 [{usr.first_name}](tg://user?id={usr.id})\n"
@@ -105,24 +137,24 @@ async def mentionall(event):
       usrtxt = ''
   try:
     spam_chats.remove(chat_id)
-  except:
+  except Exception:
     pass
 
 
 @kntl.on(events.NewMessage(pattern="^/cancel$"))
 async def cancel_spam(event):
-  if not event.chat_id in spam_chats:
+  if not event.chat_id or event.chat_id not in spam_chats:
     return await event.respond('**Bego orang gak ada tag all**')
   else:
     try:
       spam_chats.remove(event.chat_id)
-    except:
+    except Exception:
       pass
     return await event.respond('**Iya Anjeng Nih Gua Stop.**')
 
 
 @kntl.on(events.NewMessage(pattern="^/all ?(.*)"))
-async def mentionall(event):
+async def mentionalls(event):
   chat_id = event.chat_id
   if event.is_private:
     return await event.respond("**Jangan private bego**")
@@ -157,7 +189,7 @@ async def mentionall(event):
   elif event.is_reply:
     mode = "balas"
     msg = await event.get_reply_message()
-    if msg == None:
+    if msg is None:
         return await event.respond("**Si anjeng dibilang kasih pesan !!**")
   else:
     return await event.respond("**Si anjeng dibilang kasih pesan !!**")
@@ -166,7 +198,7 @@ async def mentionall(event):
   usrnum = 0
   usrtxt = ''
   async for usr in kntl.iter_participants(chat_id):
-    if not chat_id in spam_chats:
+    if not chat_id or chat_id not in spam_chats:
       break
     usrnum += 1
     usrtxt += f"[{random.choice(emoji)}](tg://user?id={usr.id})"
@@ -181,7 +213,7 @@ async def mentionall(event):
       usrtxt = ''
   try:
     spam_chats.remove(chat_id)
-  except:
+  except Exception:
     pass
 
 
