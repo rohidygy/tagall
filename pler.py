@@ -29,23 +29,38 @@ emoji = "😀 😃 😄 😁 😆 😅 😂 🤣 😭 😗 😙 😚 😘 🥰 �
 
 
 @kntl.on(events.NewMessage(pattern="^/start$"))
-async def help(event):
-  helptext = "**Ada 2 Mode Tag All Cok, Kalo /tagall emot sange + nama user. kalo /all itu random emote tanpa nama user.**"
-  await event.reply(
-    helptext,
-    link_preview=False,
-    buttons=(
-      [
-        Button.url('Owner', 't.me/kagebunshiiin'),
-      ],
-      [
-        Button.url('Support', 't.me/suportkage'),
-        Button.url('Channel', 't.me/kagestore69'),
-      ],
+async def start_handler(event):
+    helptext = "**Ada 2 Mode Tag All Cok, Kalo /tagall emot sange + nama user. kalo /all itu random emote tanpa nama user.**"
+    await event.reply(
+        helptext,
+        link_preview=False,
+        buttons=[
+            [Button.url('Owner', 't.me/kagebunshiiin')],
+            [Button.url('Support', 't.me/suportkage'),
+             Button.url('Channel', 't.me/kagestore69')],
+            [Button.inline('Payment', b'payment')]
+        ]
     )
-  )
-  
-  
+
+
+# @kntl.on(events.NewMessage(pattern="^/start$"))
+# async def help(event):
+#   helptext = "**Ada 2 Mode Tag All Cok, Kalo /tagall emot sange + nama user. kalo /all itu random emote tanpa nama user.**"
+#   await event.reply(
+#     helptext,
+#     link_preview=False,
+#     buttons=(
+#       [
+#         Button.url('Owner', 't.me/kagebunshiiin'),
+#       ],
+#       [
+#         Button.url('Support', 't.me/suportkage'),
+#         Button.url('Channel', 't.me/kagestore69'),
+#       ],
+#     )
+#   )
+
+
 @kntl.on(events.CallbackQuery(data=b'payment'))
 async def payment_callback(event):
     text = (
