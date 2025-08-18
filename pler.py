@@ -66,6 +66,11 @@ async def start_handler(event):
 @kntl.on(events.CallbackQuery(data=b"payment"))
 async def payment_callback(event):
     text = (
+        "📜 **PRICE LIST:**\n\n",
+        "**★ KEY VIP 24 JAM**\n",
+        "**★ KEY VIP 12 JAM**\n",
+        "**★ KEY VIP 6 JAM**\n",
+        "**★ KEY VIP 3 JAM**\n\n",
         "💳 **Silahkan lakukan pembayaran melalui E-Wallet Dana Berikut:**\n\n"
         "📱 Dana: `081234567890`\n"
         "👤 Atas Nama: **Dana**"
@@ -74,8 +79,8 @@ async def payment_callback(event):
     await event.edit(
         text,
         buttons=[
-            [Button.url("✅ Konfirmasi Pembayaran", "t.me/kagebunshiiin")],
-            [Button.inline("⬅️ Kembali", b"back_to_menu")],
+            [Button.url("Konfirmasi Pembayaran", "t.me/kagebunshiiin")],
+            [Button.inline("Kembali", b"back_to_menu")],
         ],
     )
 
