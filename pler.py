@@ -40,7 +40,14 @@ async def start_handler(event):
                 Button.url("Support", "t.me/suportkage"),
                 Button.url("Channel", "t.me/kagestore69"),
             ],
-            [Button.inline("Payment", b"payment")],
+            [
+                Button.inline("VIP 24 JAM", b"payment24"),
+                Button.inline("VIP 12 JAM", b"payment12"),
+            ],
+            [
+                Button.inline("VIP 6 JAM", b"payment6"),
+                Button.inline("VIP 3 JAM", b"payment3"),
+            ],
         ],
     )
 
@@ -63,14 +70,60 @@ async def start_handler(event):
 #   )
 
 
-@kntl.on(events.CallbackQuery(data=b"payment"))
-async def payment_callback(event):
+@kntl.on(events.CallbackQuery(data=b"payment24"))
+async def payment24_callback(event):
     text = (
-        "📜 **PRICE LIST:**\n\n"
-        "★ **KEY VIP 24 JAM**\n"
-        "★ **KEY VIP 12 JAM**\n"
-        "★ **KEY VIP 6 JAM**\n"
-        "★ **KEY VIP 3 JAM**\n\n"
+        "💳 **Silahkan lakukan pembayaran melalui E-Wallet Dana berikut:**\n\n"
+        "📱 Dana: `081234567890`\n"
+        "👤 Atas Nama: **Dana**"
+    )
+
+    await event.edit(
+        text,
+        buttons=[
+            [Button.url("Konfirmasi Pembayaran", "t.me/kagebunshiiin")],
+            [Button.inline("Kembali", b"back_to_menu")],
+        ],
+    )
+
+
+@kntl.on(events.CallbackQuery(data=b"payment12"))
+async def payment12_callback(event):
+    text = (
+        "💳 **Silahkan lakukan pembayaran melalui E-Wallet Dana berikut:**\n\n"
+        "📱 Dana: `081234567890`\n"
+        "👤 Atas Nama: **Dana**"
+    )
+
+    await event.edit(
+        text,
+        buttons=[
+            [Button.url("Konfirmasi Pembayaran", "t.me/kagebunshiiin")],
+            [Button.inline("Kembali", b"back_to_menu")],
+        ],
+    )
+
+
+@kntl.on(events.CallbackQuery(data=b"payment16"))
+async def payment6_callback(event):
+    text = (
+        "💳 **Silahkan lakukan pembayaran melalui E-Wallet Dana berikut:**\n\n"
+        "📱 Dana: `081234567890`\n"
+        "👤 Atas Nama: **Dana**"
+    )
+
+    await event.edit(
+        text,
+        buttons=[
+            [Button.url("Konfirmasi Pembayaran", "t.me/kagebunshiiin")],
+            [Button.inline("Kembali", b"back_to_menu")],
+        ],
+    )
+
+
+@kntl.on(events.CallbackQuery(data=b"payment3"))
+async def payment3_callback(event):
+    text = (
         "💳 **Silahkan lakukan pembayaran melalui E-Wallet Dana berikut:**\n\n"
         "📱 Dana: `081234567890`\n"
         "👤 Atas Nama: **Dana**"
