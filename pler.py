@@ -67,13 +67,13 @@ async def start_handler(event):
 async def payment_callback(event):
     text = (
         "📜 **PRICE LIST:**\n\n"
-        "**★ KEY VIP 24 JAM**\n"
-        "**★ KEY VIP 12 JAM**\n"
-        "**★ KEY VIP 6 JAM**\n"
-        "**★ KEY VIP 3 JAM**\n\n"
-        "💳 **Silahkan lakukan pembayaran melalui E-Wallet Dana Berikut:**\n\n"
+        "★ **KEY VIP 24 JAM**\n"
+        "★ **KEY VIP 12 JAM**\n"
+        "★ **KEY VIP 6 JAM**\n"
+        "★ **KEY VIP 3 JAM**\n\n"
+        "💳 **Silahkan lakukan pembayaran melalui E-Wallet Dana berikut:**\n\n"
         "📱 Dana: `081234567890`\n"
-        "👤 Atas Nama: **Dana**",
+        "👤 Atas Nama: **Dana**"
     )
 
     await event.edit(
