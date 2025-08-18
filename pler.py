@@ -52,29 +52,14 @@ async def start_handler(event):
     )
 
 
-# @kntl.on(events.NewMessage(pattern="^/start$"))
-# async def help(event):
-#   helptext = "**Ada 2 Mode Tag All Cok, Kalo /tagall emot sange + nama user. kalo /all itu random emote tanpa nama user.**"
-#   await event.reply(
-#     helptext,
-#     link_preview=False,
-#     buttons=(
-#       [
-#         Button.url('Owner', 't.me/kagebunshiiin'),
-#       ],
-#       [
-#         Button.url('Support', 't.me/suportkage'),
-#         Button.url('Channel', 't.me/kagestore69'),
-#       ],
-#     )
-#   )
-
-
 @kntl.on(events.CallbackQuery(data=b"payment24"))
 async def payment24_callback(event):
     text = (
-        "💳 **Silahkan lakukan pembayaran melalui E-Wallet Dana berikut:**\n\n"
-        "📱 Dana: `081234567890`\n"
+        "💎 **VIP 24 JAM:**\n\n"
+        "💵 **Harga:** `Rp. 100.000`\n\n"
+        "💳 **Silahkan lakukan pembayaran melalui akses berikut:**\n\n"
+        "🪙 **Dana:** `081234567890`\n"
+        "🏧 **BCA:** `999000028`\n"
         "👤 Atas Nama: **Dana**"
     )
 
@@ -90,8 +75,11 @@ async def payment24_callback(event):
 @kntl.on(events.CallbackQuery(data=b"payment12"))
 async def payment12_callback(event):
     text = (
-        "💳 **Silahkan lakukan pembayaran melalui E-Wallet Dana berikut:**\n\n"
-        "📱 Dana: `081234567890`\n"
+        "💎 **VIP 12 JAM:**\n\n"
+        "💵 **Harga:** `Rp. 80.000`\n\n"
+        "💳 **Silahkan lakukan pembayaran melalui akses berikut:**\n\n"
+        "🪙 **Dana:** `081234567890`\n"
+        "🏧 **BCA:** `999000028`\n"
         "👤 Atas Nama: **Dana**"
     )
 
@@ -104,11 +92,14 @@ async def payment12_callback(event):
     )
 
 
-@kntl.on(events.CallbackQuery(data=b"payment16"))
+@kntl.on(events.CallbackQuery(data=b"payment6"))
 async def payment6_callback(event):
     text = (
-        "💳 **Silahkan lakukan pembayaran melalui E-Wallet Dana berikut:**\n\n"
-        "📱 Dana: `081234567890`\n"
+        "💎 **VIP 6 JAM:**\n\n"
+        "💵 **Harga:** `Rp. 50.000`\n\n"
+        "💳 **Silahkan lakukan pembayaran melalui akses berikut:**\n\n"
+        "🪙 **Dana:** `081234567890`\n"
+        "🏧 **BCA:** `999000028`\n"
         "👤 Atas Nama: **Dana**"
     )
 
@@ -124,8 +115,11 @@ async def payment6_callback(event):
 @kntl.on(events.CallbackQuery(data=b"payment3"))
 async def payment3_callback(event):
     text = (
-        "💳 **Silahkan lakukan pembayaran melalui E-Wallet Dana berikut:**\n\n"
-        "📱 Dana: `081234567890`\n"
+        "💎 **VIP 12 JAM:**\n\n"
+        "💵 **Harga:** `Rp. 35.000`\n\n"
+        "💳 **Silahkan lakukan pembayaran melalui akses berikut:**\n\n"
+        "🪙 **Dana:** `081234567890`\n"
+        "🏧 **BCA:** `999000028`\n"
         "👤 Atas Nama: **Dana**"
     )
 
