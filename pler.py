@@ -73,7 +73,7 @@ async def payment_callback(event):
         "**★ KEY VIP 3 JAM**\n\n",
         "💳 **Silahkan lakukan pembayaran melalui E-Wallet Dana Berikut:**\n\n"
         "📱 Dana: `081234567890`\n"
-        "👤 Atas Nama: **Dana**"
+        "👤 Atas Nama: **Dana**",
     )
 
     await event.edit(
