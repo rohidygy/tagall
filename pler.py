@@ -149,7 +149,14 @@ async def back_to_menu(event):
                 Button.url("Support", "t.me/suportkage"),
                 Button.url("Channel", "t.me/kagestore69"),
             ],
-            [Button.inline("Payment", b"payment")],
+            [
+                Button.inline("VIP 24 JAM", b"payment24"),
+                Button.inline("VIP 12 JAM", b"payment12"),
+            ],
+            [
+                Button.inline("VIP 6 JAM", b"payment6"),
+                Button.inline("VIP 3 JAM", b"payment3"),
+            ],
         ],
     )
 
