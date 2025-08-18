@@ -51,7 +51,7 @@ async def payment_callback(event):
     text = (
         "💳 **Silahkan lakukan pembayaran melalui E-Wallet Dana Berikut:**\n\n"
         "📱 Dana: `081234567890`\n"
-        "👤 Atas Nama: *Dana*"
+        "👤 Atas Nama: **Dana**"
     )
 
     await event.edit(
