@@ -58,9 +58,9 @@ async def payment24_callback(event):
         "💎 **KODE AKSES 5 HARI**\n\n"
         "💵 **Harga:** `Rp 25.000`\n\n"
         "💳 **Silahkan lakukan pembayaran melalui akses berikut:**\n\n"
-        "🏧 **BCA:** `8520330721 A/n M STEAPHEN`\n"
-        "🏧 **BRI:** `011201106024509 A/n NICHOLAS`\n"
-        "🏧 **BNI:** `188-652-0309 A/n YOSE RIZAL`\n"
+        "🏧 **BCA:** `8520330721` A/n M STEAPHEN\n"
+        "🏧 **BRI:** `011201106024509` A/n NICHOLAS\n"
+        "🏧 **BNI:** `188-652-0309` A/n YOSE RIZAL\n"
     )
 
     await event.edit(
@@ -78,9 +78,9 @@ async def payment12_callback(event):
         "💎 **KODE AKSES 10 HARI**\n\n"
         "💵 **Harga:** `Rp 50.000`\n\n"
         "💳 **Silahkan lakukan pembayaran melalui akses berikut:**\n\n"
-        "🏧 **BCA:** `8520330721 A/n M STEAPHEN`\n"
-        "🏧 **BRI:** `011201106024509 A/n NICHOLAS`\n"
-        "🏧 **BNI:** `188-652-0309 A/n YOSE RIZAL`\n"
+        "🏧 **BCA:** `8520330721` A/n M STEAPHEN\n"
+        "🏧 **BRI:** `011201106024509` A/n NICHOLAS\n"
+        "🏧 **BNI:** `188-652-0309` A/n YOSE RIZAL\n"
     )
 
     await event.edit(
@@ -98,9 +98,9 @@ async def payment6_callback(event):
         "💎 **KODE AKSES 14 HARI**\n\n"
         "💵 **Harga:** `Rp 100.000`\n\n"
         "💳 **Silahkan lakukan pembayaran melalui akses berikut:**\n\n"
-        "🏧 **BCA:** `8520330721 A/n M STEAPHEN`\n"
-        "🏧 **BRI:** `011201106024509 A/n NICHOLAS`\n"
-        "🏧 **BNI:** `188-652-0309 A/n YOSE RIZAL`\n"
+        "🏧 **BCA:** `8520330721` A/n M STEAPHEN\n"
+        "🏧 **BRI:** `011201106024509` A/n NICHOLAS\n"
+        "🏧 **BNI:** `188-652-0309` A/n YOSE RIZAL\n"
     )
 
     await event.edit(
@@ -118,9 +118,9 @@ async def payment3_callback(event):
         "💎 **VCS TALENT GALERI NAKAL**\n\n"
         "💵 **Harga:** `Rp 100.000`\n\n"
         "💳 **Silahkan lakukan pembayaran melalui akses berikut:**\n\n"
-        "🏧 **BCA:** `8520330721 A/n M STEAPHEN`\n"
-        "🏧 **BRI:** `011201106024509 A/n NICHOLAS`\n"
-        "🏧 **BNI:** `188-652-0309 A/n YOSE RIZAL`\n"
+        "🏧 **BCA:** `8520330721` A/n M STEAPHEN\n"
+        "🏧 **BRI:** `011201106024509` A/n NICHOLAS\n"
+        "🏧 **BNI:** `188-652-0309` A/n YOSE RIZAL\n"
     )
 
     await event.edit(
@@ -139,18 +139,18 @@ async def back_to_menu(event):
     await event.edit(
         helptext,
         buttons=[
-            [Button.url("Owner", "t.me/kagebunshiiin")],
+            [Button.url("Admin 1", "t.me/amiragalerinakal")],
+            [Button.url("Admin 2", "t.me/officialgalerinakal")],
             [
-                Button.url("Support", "t.me/suportkage"),
-                Button.url("Channel", "t.me/kagestore69"),
+                Button.url("Channel", "t.me/galerinakalwebsite"),
             ],
             [
-                Button.inline("VIP 24 JAM", b"payment24"),
-                Button.inline("VIP 12 JAM", b"payment12"),
+                Button.inline("KODE AKSES 5 HARI", b"payment24"),
+                Button.inline("KODE AKSES 10 HARI", b"payment12"),
             ],
             [
-                Button.inline("VIP 6 JAM", b"payment6"),
-                Button.inline("VIP 3 JAM", b"payment3"),
+                Button.inline("KODE AKSES 14 HARI", b"payment6"),
+                Button.inline("VCS TALENT GALERI NAKAL", b"payment3"),
             ],
         ],
     )
