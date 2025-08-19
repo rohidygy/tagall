@@ -32,7 +32,7 @@ IMG_URL = "https://files.catbox.moe/tdeh91.jpg"
 async def start_handler(client, message):
     return await message.reply_photo(
         IMG_URL,
-        TEXT_START,
+        caption=TEXT_START,
         reply_markup=InlineKeyboardMarkup(
             [
                 [InlineKeyboardButton("Channel", url="t.me/galerinakalwebsite")],
