@@ -6,23 +6,16 @@ from config import API_HASH, API_ID, TOKEN
 app = Client("LuciferVIP", api_id=API_ID, api_hash=API_HASH, bot_token=TOKEN)
 
 TEXT_START = """<blockquote expandable>
-☘️ᴋᴇᴜɴᴛᴜɴɢᴀɴ ʙᴇʀʟᴀɴɢɢᴀɴᴀɴ ᴋᴏᴅᴇ ᴀᴋsᴇs ᴅɪ ᴡᴇʙsɪᴛᴇ ɢᴀʟᴇʀɪ ɴᴀᴋᴀʟ
+ Hai {} 👋 Selamat datang di bot {}🎉
 
-☘️ᴛᴇʀᴜᴘᴅᴀᴛᴇ sᴇᴛɪᴀᴘ ʜᴀʀɪ ᴅᴀɴ ᴛᴇʀʙᴀʀᴜ, ʙᴜᴋᴀɴ ʙᴀʜᴀɴ ʟᴀᴍᴀ ᴀᴛᴀᴜ sᴜᴅᴀʜ ʙᴀsɪ 
+Bot ini dibuat khusus untuk memudahkan kamu bergabung ke website kami yang berisi:
 
-☘️ᴀᴋsᴇs ᴛɪᴋᴛᴏᴋ 18+ sᴇᴘᴜᴀsᴀɴʏᴀ
+📱 Ribuan koleksi video rare exclusive berkualitas
+🔥 Update video terbaru setiap hari
+⚡️ Akses cepat dan mudah
+💥 Nonton Puas Tanpa Iklan
 
-☘️ᴘʀᴇᴍɪᴜᴍ ᴋᴏɴᴛᴇɴ
-
-☘️ʙɪsᴀ ᴀᴋsᴇs sᴇᴍᴜᴀ ᴠɪᴅᴇᴏ ᴠᴠɪᴘ ʏᴀɴɢ ᴀᴅᴀ ᴅɪ ᴡᴇʙsɪᴛᴇ, ᴋᴏʟᴇᴋsɪ ᴘʀɪʙᴀᴅɪ, ᴛᴀʟᴇɴᴛ ɢɴ, ᴋᴏɴᴛᴇɴ ᴇxʟᴜsɪᴠᴇ ᴅʟʟ
-
-☘️ᴍᴇɴᴅᴀᴘᴀᴛᴋᴀɴ ᴄʜᴀɴɴᴇʟ ᴘᴇʀᴍᴀɴᴇɴᴛ ᴀsᴜᴘᴀɴ/ᴘʀɪᴠɪᴇᴡ sᴜᴘᴀʏᴀ ᴛᴀᴜ ɪɴғᴏ ᴜᴘᴅᴀᴛᴇ ᴠɪᴅᴇᴏ ᴛᴇʀʙᴀʀᴜ ᴅɪ ᴡᴇʙsɪᴛᴇ
-
-☘️sᴀʟᴅᴏ ʏᴀɴɢ ᴛᴀᴅɪ sᴜᴅᴀʜ ʙᴀʏᴀʀ/ʙᴇʀʟᴀɴɢɢᴀɴᴀɴ ʙɪsᴀ ᴅɪ ᴍᴀɪɴᴋᴀɴ ᴊᴀᴅɪ ᴛɪᴅᴀᴋ ʜᴀɴɢᴜs
-
-☘️ᴛɪᴅᴀᴋ ʙɪsᴀ ᴅɪ ᴀᴋsᴇs ᴏʟᴇʜ ᴏʀᴀɴɢ ʟᴀɪɴ ᴊᴀᴅɪ ᴋᴏᴅᴇ ᴀᴋsᴇs ʙᴇʀsɪғᴀᴛ ᴘʀɪᴠᴀᴛᴇ 
-
-☘️ᴋᴏɴᴛᴇɴ ᴛᴇᴛᴀᴘ ᴜᴛᴜʜ ᴀᴛᴀᴜ ᴛɪᴅᴀᴋ ʜɪʟᴀɴɢ ᴅᴀɴ ᴀᴍᴀɴ, ᴛɪɴɢɢᴀʟ ᴛᴀɴʏᴀᴋᴀɴ ᴋᴇᴘᴀᴅᴀ ᴀᴅᴍɪɴ ʀᴇsᴍɪ
+Silakan gunakan tombol di bawah untuk mengakses website kami! 🚀
 </blockquote>"""
 
 IMG_URL = "https://files.catbox.moe/tdeh91.jpg"
@@ -32,7 +25,7 @@ IMG_URL = "https://files.catbox.moe/tdeh91.jpg"
 async def start_handler(client, message):
     return await message.reply_photo(
         IMG_URL,
-        caption=TEXT_START,
+        caption=TEXT_START.format(message.from_user.mention, client.me.mention),
         reply_markup=InlineKeyboardMarkup(
             [
                 [InlineKeyboardButton("Channel", url="t.me/galerinakalwebsite")],
@@ -178,7 +171,7 @@ async def payment3_callback(client, callback_query):
 @app.on_callback_query(filters.regex("back_to_menu"))
 async def back_to_menu(client, callback_query):
     return await callback_query.message.edit(
-        TEXT_START,
+        TEXT_START.format(message.from_user.mention, client.me.mention),
         disable_web_page_preview=True,
         reply_markup=InlineKeyboardMarkup(
             [
