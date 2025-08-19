@@ -28,19 +28,19 @@ async def start_handler(client, message):
         caption=TEXT_START.format(message.from_user.mention, client.me.mention),
         reply_markup=InlineKeyboardMarkup(
             [
-                [InlineKeyboardButton("Channel", url="t.me/galerinakalwebsite")],
+                [InlineKeyboardButton("ᴄʜᴀɴɴᴇʟ", url="t.me/galerinakalwebsite")],
                 [
-                    InlineKeyboardButton("Admin 1", url="t.me/amiragalerinakal"),
-                    InlineKeyboardButton("Admin 2", url="t.me/officialgalerinakal"),
+                    InlineKeyboardButton("ᴀᴅᴍɪɴ 1", url="t.me/amiragalerinakal"),
+                    InlineKeyboardButton("ᴀᴅᴍɪɴ 2", url="t.me/officialgalerinakal"),
                 ],
                 [
-                    InlineKeyboardButton("Kode Akses 5H", callback_data="payment24"),
-                    InlineKeyboardButton("Kode Akses 10H", callback_data="payment12"),
+                    InlineKeyboardButton("ᴋᴏᴅᴇ ᴀᴋsᴇs 5ʜ", callback_data="payment24"),
+                    InlineKeyboardButton("ᴋᴏᴅᴇ ᴀᴋsᴇs 10ʜ", callback_data="payment12"),
                 ],
                 [
-                    InlineKeyboardButton("Kode Akses 14H", callback_data="payment6"),
+                    InlineKeyboardButton("ᴋᴏᴅᴇ ᴀᴋsᴇs 14ʜ", callback_data="payment6"),
                     InlineKeyboardButton(
-                        "Vcs Talent Galeri Nakal", callback_data="payment3"
+                        "ᴛᴀʟᴇɴᴛ ᴠᴄs ɢɴ", callback_data="payment3"
                     ),
                 ],
             ]
@@ -57,7 +57,6 @@ async def payment24_callback(client, callback_query):
         "🏧 **BCA:** `8520330721` A/n M STEAPHEN\n"
         "🏧 **BRI:** `011201106024509` A/n NICHOLAS\n"
         "🏧 **BNI:** `188-652-0309` A/n YOSE RIZAL\n\n"
-        "KLIK ADMIN GALERY NAKAL UNTUK TANYA TALENT VCS READY\n"
     )
     return await callback_query.message.edit(
         text,
@@ -65,7 +64,7 @@ async def payment24_callback(client, callback_query):
             [
                 [
                     InlineKeyboardButton(
-                        "Konfirmasi Pembayaran", url="t.me/telegalerinakal_bot"
+                        "ᴋᴏɴғɪʀᴍᴀsɪ ᴘᴇᴍʙᴀʏᴀʀᴀɴ", url="t.me/telegalerinakal_bot"
                     )
                 ],
                 [InlineKeyboardButton("Kembali", callback_data="back_to_menu")],
@@ -83,7 +82,6 @@ async def payment12_callback(client, callback_query):
         "🏧 **BCA:** `8520330721` A/n M STEAPHEN\n"
         "🏧 **BRI:** `011201106024509` A/n NICHOLAS\n"
         "🏧 **BNI:** `188-652-0309` A/n YOSE RIZAL\n\n"
-        "KLIK ADMIN GALERY NAKAL UNTUK TANYA TALENT VCS READY\n"
     )
     return await callback_query.message.edit(
         text,
@@ -91,7 +89,7 @@ async def payment12_callback(client, callback_query):
             [
                 [
                     InlineKeyboardButton(
-                        "Konfirmasi Pembayaran", url="t.me/telegalerinakal_bot"
+                        "ᴋᴏɴғɪʀᴍᴀsɪ ᴘᴇᴍʙᴀʏᴀʀᴀɴ", url="t.me/telegalerinakal_bot"
                     )
                 ],
                 [InlineKeyboardButton("Kembali", callback_data="back_to_menu")],
@@ -109,7 +107,6 @@ async def payment6_callback(client, callback_query):
         "🏧 **BCA:** `8520330721` A/n M STEAPHEN\n"
         "🏧 **BRI:** `011201106024509` A/n NICHOLAS\n"
         "🏧 **BNI:** `188-652-0309` A/n YOSE RIZAL\n\n"
-        "KLIK ADMIN GALERY NAKAL UNTUK TANYA TALENT VCS READY\n"
     )
     return await callback_query.message.edit(
         text,
@@ -117,7 +114,7 @@ async def payment6_callback(client, callback_query):
             [
                 [
                     InlineKeyboardButton(
-                        "Konfirmasi Pembayaran", url="t.me/telegalerinakal_bot"
+                        "ᴋᴏɴғɪʀᴍᴀsɪ ᴘᴇᴍʙᴀʏᴀʀᴀɴ", url="t.me/telegalerinakal_bot"
                     )
                 ],
                 [InlineKeyboardButton("Kembali", callback_data="back_to_menu")],
@@ -143,12 +140,12 @@ async def payment3_callback(client, callback_query):
             [
                 [
                     InlineKeyboardButton(
-                        "Konfirmasi Pembayaran", url="t.me/telegalerinakal_bot"
+                        "ᴋᴏɴғɪʀᴍᴀsɪ ᴘᴇᴍʙᴀʏᴀʀᴀɴ", url="t.me/telegalerinakal_bot"
                     )
                 ],
                 [
                     InlineKeyboardButton(
-                        "ADMIN GALERY NAKAL", url="t.me/amiragalerinakal"
+                        "ᴀᴅᴍɪɴ ɢᴀʟᴇʀʏ ɴᴀᴋᴀʟ", url="t.me/amiragalerinakal"
                     )
                 ],
                 [InlineKeyboardButton("Kembali", callback_data="back_to_menu")],
@@ -164,23 +161,19 @@ async def back_to_menu(client, callback_query):
         disable_web_page_preview=True,
         reply_markup=InlineKeyboardMarkup(
             [
-                [InlineKeyboardButton("Channel", url="t.me/galerinakalwebsite")],
+                [InlineKeyboardButton("ᴄʜᴀɴɴᴇʟ", url="t.me/galerinakalwebsite")],
                 [
-                    InlineKeyboardButton("Admin 1", url="t.me/amiragalerinakal"),
-                    InlineKeyboardButton("Admin 2", url="t.me/officialgalerinakal"),
+                    InlineKeyboardButton("ᴀᴅᴍɪɴ 1", url="t.me/amiragalerinakal"),
+                    InlineKeyboardButton("ᴀᴅᴍɪɴ 2", url="t.me/officialgalerinakal"),
                 ],
                 [
-                    InlineKeyboardButton("Kode akses 5H", callback_data="payment24"),
-                    InlineKeyboardButton(
-                        "KODE AKSES 10 HARI", callback_data="payment12"
-                    ),
+                    InlineKeyboardButton("ᴋᴏᴅᴇ ᴀᴋsᴇs 5ʜ", callback_data="payment24"),
+                    InlineKeyboardButton("ᴋᴏᴅᴇ ᴀᴋsᴇs 10ʜ", callback_data="payment12"),
                 ],
                 [
+                    InlineKeyboardButton("ᴋᴏᴅᴇ ᴀᴋsᴇs 14ʜ", callback_data="payment6"),
                     InlineKeyboardButton(
-                        "KODE AKSES 14 HARI", callback_data="payment6"
-                    ),
-                    InlineKeyboardButton(
-                        "VCS TALENT GALERI NAKAL", callback_data="payment3"
+                        "ᴛᴀʟᴇɴᴛ ᴠᴄs ɢɴ", callback_data="payment3"
                     ),
                 ],
             ]
