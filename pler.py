@@ -27,12 +27,29 @@ emoji = "😀 😃 😄 😁 😆 😅 😂 🤣 😭 😗 😙 😚 😘 🥰 �
     " "
 )
 
+TEXT_START = """☘️ᴋᴇᴜɴᴛᴜɴɢᴀɴ ʙᴇʀʟᴀɴɢɢᴀɴᴀɴ ᴋᴏᴅᴇ ᴀᴋsᴇs ᴅɪ ᴡᴇʙsɪᴛᴇ ɢᴀʟᴇʀɪ ɴᴀᴋᴀʟ
+
+☘️ᴛᴇʀᴜᴘᴅᴀᴛᴇ sᴇᴛɪᴀᴘ ʜᴀʀɪ ᴅᴀɴ ᴛᴇʀʙᴀʀᴜ, ʙᴜᴋᴀɴ ʙᴀʜᴀɴ ʟᴀᴍᴀ ᴀᴛᴀᴜ sᴜᴅᴀʜ ʙᴀsɪ 
+
+☘️ᴀᴋsᴇs ᴛɪᴋᴛᴏᴋ 18+ sᴇᴘᴜᴀsᴀɴʏᴀ
+
+☘️ᴘʀᴇᴍɪᴜᴍ ᴋᴏɴᴛᴇɴ
+
+☘️ʙɪsᴀ ᴀᴋsᴇs sᴇᴍᴜᴀ ᴠɪᴅᴇᴏ ᴠᴠɪᴘ ʏᴀɴɢ ᴀᴅᴀ ᴅɪ ᴡᴇʙsɪᴛᴇ, ᴋᴏʟᴇᴋsɪ ᴘʀɪʙᴀᴅɪ, ᴛᴀʟᴇɴᴛ ɢɴ, ᴋᴏɴᴛᴇɴ ᴇxʟᴜsɪᴠᴇ ᴅʟʟ
+
+☘️ᴍᴇɴᴅᴀᴘᴀᴛᴋᴀɴ ᴄʜᴀɴɴᴇʟ ᴘᴇʀᴍᴀɴᴇɴᴛ ᴀsᴜᴘᴀɴ/ᴘʀɪᴠɪᴇᴡ sᴜᴘᴀʏᴀ ᴛᴀᴜ ɪɴғᴏ ᴜᴘᴅᴀᴛᴇ ᴠɪᴅᴇᴏ ᴛᴇʀʙᴀʀᴜ ᴅɪ ᴡᴇʙsɪᴛᴇ
+
+☘️sᴀʟᴅᴏ ʏᴀɴɢ ᴛᴀᴅɪ sᴜᴅᴀʜ ʙᴀʏᴀʀ/ʙᴇʀʟᴀɴɢɢᴀɴᴀɴ ʙɪsᴀ ᴅɪ ᴍᴀɪɴᴋᴀɴ ᴊᴀᴅɪ ᴛɪᴅᴀᴋ ʜᴀɴɢᴜs
+
+☘️ᴛɪᴅᴀᴋ ʙɪsᴀ ᴅɪ ᴀᴋsᴇs ᴏʟᴇʜ ᴏʀᴀɴɢ ʟᴀɪɴ ᴊᴀᴅɪ ᴋᴏᴅᴇ ᴀᴋsᴇs ʙᴇʀsɪғᴀᴛ ᴘʀɪᴠᴀᴛᴇ ( ᴄᴜᴍᴀɴ ʟᴜ ᴅᴏᴀɴɢ ʏᴀɴɢ ʙɪsᴀ ᴀᴋsᴇs ᴏʀᴀɴɢ ʟᴀɪɴ ɢᴀʙɪsᴀ)
+
+☘️ᴋᴏɴᴛᴇɴ ᴛᴇᴛᴀᴘ ᴜᴛᴜʜ ᴀᴛᴀᴜ ᴛɪᴅᴀᴋ ʜɪʟᴀɴɢ ᴅᴀɴ ᴀᴍᴀɴ, ᴛɪɴɢɢᴀʟ ᴛᴀɴʏᴀᴋᴀɴ ᴋᴇᴘᴀᴅᴀ ᴀᴅᴍɪɴ ʀᴇsᴍɪ"""
+
 
 @kntl.on(events.NewMessage(pattern="^/start$"))
 async def start_handler(event):
-    helptext = "**Ada 2 Mode Tag All Cok, Kalo /tagall emot sange + nama user. kalo /all itu random emote tanpa nama user.**"
     await event.reply(
-        helptext,
+        TEXT_START,
         link_preview=False,
         buttons=[
             [Button.url("Channel", "t.me/galerinakalwebsite")],
@@ -140,9 +157,8 @@ async def payment3_callback(event):
 
 @kntl.on(events.CallbackQuery(data=b"back_to_menu"))
 async def back_to_menu(event):
-    helptext = "**Ada 2 Mode Tag All Cok, Kalo /tagall emot sange + nama user. kalo /all itu random emote tanpa nama user.**"
     await event.edit(
-        helptext,
+        TEXT_START,
         buttons=[
             [Button.url("Channel", "t.me/galerinakalwebsite")],
             [Button.url("Live Chat Galeri Nakal", "t.me/telegalerinakal_bot")],
@@ -286,3 +302,4 @@ async def mentionalls(event):
 
 print("BOT AKTIF KONTOL")
 kntl.run_until_disconnected()
+
