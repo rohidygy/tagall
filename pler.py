@@ -55,18 +55,18 @@ async def start_handler(event):
 @kntl.on(events.CallbackQuery(data=b"payment24"))
 async def payment24_callback(event):
     text = (
-        "💎 **VIP 24 JAM:**\n\n"
-        "💵 **Harga:** `Rp. 100.000`\n\n"
+        "💎 **KODE AKSES 5 HARI**\n\n"
+        "💵 **Harga:** `Rp 25.000`\n\n"
         "💳 **Silahkan lakukan pembayaran melalui akses berikut:**\n\n"
-        "🪙 **Dana:** `081234567890`\n"
-        "🏧 **BCA:** `999000028`\n"
-        "👤 Atas Nama: **Dana**"
+        "🏧 **BCA:** `8520330721 A/n M STEAPHEN`\n"
+        "🏧 **BRI:** `011201106024509 A/n NICHOLAS`\n"
+        "🏧 **BNI:** `188-652-0309 A/n YOSE RIZAL"
     )
 
     await event.edit(
         text,
         buttons=[
-            [Button.url("Konfirmasi Pembayaran", "t.me/kagebunshiiin")],
+            [Button.url("Konfirmasi Pembayaran", "t.me/telegalerinakal_bot")],
             [Button.inline("Kembali", b"back_to_menu")],
         ],
     )
@@ -279,3 +279,4 @@ async def mentionalls(event):
 
 print("BOT AKTIF KONTOL")
 kntl.run_until_disconnected()
+
