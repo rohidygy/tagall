@@ -39,9 +39,7 @@ async def start_handler(client, message):
                 ],
                 [
                     InlineKeyboardButton("ᴋᴏᴅᴇ ᴀᴋsᴇs 14ʜ", callback_data="payment6"),
-                    InlineKeyboardButton(
-                        "ᴛᴀʟᴇɴᴛ ᴠᴄs ɢɴ", callback_data="payment3"
-                    ),
+                    InlineKeyboardButton("ᴛᴀʟᴇɴᴛ ᴠᴄs ɢɴ", callback_data="payment3"),
                 ],
             ]
         ),
@@ -172,9 +170,7 @@ async def back_to_menu(client, callback_query):
                 ],
                 [
                     InlineKeyboardButton("ᴋᴏᴅᴇ ᴀᴋsᴇs 14ʜ", callback_data="payment6"),
-                    InlineKeyboardButton(
-                        "ᴛᴀʟᴇɴᴛ ᴠᴄs ɢɴ", callback_data="payment3"
-                    ),
+                    InlineKeyboardButton("ᴛᴀʟᴇɴᴛ ᴠᴄs ɢɴ", callback_data="payment3"),
                 ],
             ]
         ),
