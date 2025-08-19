@@ -60,7 +60,8 @@ async def payment24_callback(event):
         "💳 **Silahkan lakukan pembayaran melalui akses berikut:**\n\n"
         "🏧 **BCA:** `8520330721` A/n M STEAPHEN\n"
         "🏧 **BRI:** `011201106024509` A/n NICHOLAS\n"
-        "🏧 **BNI:** `188-652-0309` A/n YOSE RIZAL\n"
+        "🏧 **BNI:** `188-652-0309` A/n YOSE RIZAL\n\n"
+        "KLIK ADMIN GALERY NAKAL UNTUK TANYA TALENT VCS READY\n"
     )
 
     await event.edit(
@@ -80,7 +81,8 @@ async def payment12_callback(event):
         "💳 **Silahkan lakukan pembayaran melalui akses berikut:**\n\n"
         "🏧 **BCA:** `8520330721` A/n M STEAPHEN\n"
         "🏧 **BRI:** `011201106024509` A/n NICHOLAS\n"
-        "🏧 **BNI:** `188-652-0309` A/n YOSE RIZAL\n"
+        "🏧 **BNI:** `188-652-0309` A/n YOSE RIZAL\n\n"
+        "KLIK ADMIN GALERY NAKAL UNTUK TANYA TALENT VCS READY\n"
     )
 
     await event.edit(
@@ -100,7 +102,8 @@ async def payment6_callback(event):
         "💳 **Silahkan lakukan pembayaran melalui akses berikut:**\n\n"
         "🏧 **BCA:** `8520330721` A/n M STEAPHEN\n"
         "🏧 **BRI:** `011201106024509` A/n NICHOLAS\n"
-        "🏧 **BNI:** `188-652-0309` A/n YOSE RIZAL\n"
+        "🏧 **BNI:** `188-652-0309` A/n YOSE RIZAL\n\n"
+        "KLIK ADMIN GALERY NAKAL UNTUK TANYA TALENT VCS READY\n"
     )
 
     await event.edit(
@@ -120,7 +123,7 @@ async def payment3_callback(event):
         "💳 **Silahkan lakukan pembayaran melalui akses berikut:**\n\n"
         "🏧 **BCA:** `8520330721` A/n M STEAPHEN\n"
         "🏧 **BRI:** `011201106024509` A/n NICHOLAS\n"
-        "🏧 **BNI:** `188-652-0309` A/n YOSE RIZAL\n"
+        "🏧 **BNI:** `188-652-0309` A/n YOSE RIZAL\n\n"
         "KLIK ADMIN GALERY NAKAL UNTUK TANYA TALENT VCS READY\n"
     )
 
