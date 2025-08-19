@@ -160,7 +160,7 @@ async def payment3_callback(client, callback_query):
 @app.on_callback_query(filters.regex("back_to_menu"))
 async def back_to_menu(client, callback_query):
     return await callback_query.message.edit(
-        TEXT_START.format(message.from_user.mention, client.me.mention),
+        TEXT_START.format(callback_query.message.from_user.mention, client.me.mention),
         disable_web_page_preview=True,
         reply_markup=InlineKeyboardMarkup(
             [
