@@ -35,18 +35,18 @@ async def start_handler(event):
         helptext,
         link_preview=False,
         buttons=[
-            [Button.url("Owner", "t.me/kagebunshiiin")],
+            [Button.url("Admin 1", "t.me/amiragalerinakal")],
             [
                 Button.url("Support", "t.me/suportkage"),
                 Button.url("Channel", "t.me/kagestore69"),
             ],
             [
-                Button.inline("VIP 24 JAM", b"payment24"),
-                Button.inline("VIP 12 JAM", b"payment12"),
+                Button.inline("KODE AKSES 5 HARI", b"payment24"),
+                Button.inline("KODE AKSES 10 HARI", b"payment12"),
             ],
             [
-                Button.inline("VIP 6 JAM", b"payment6"),
-                Button.inline("VIP 3 JAM", b"payment3"),
+                Button.inline("KODE AKSES 14 HARI", b"payment6"),
+                Button.inline("VCS TALENT GALERI NAKAL", b"payment3"),
             ],
         ],
     )
@@ -279,3 +279,4 @@ async def mentionalls(event):
 
 print("BOT AKTIF KONTOL")
 kntl.run_until_disconnected()
+
