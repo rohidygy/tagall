@@ -25,12 +25,13 @@ TEXT_START = """<blockquote expandable>
 ☘️ᴋᴏɴᴛᴇɴ ᴛᴇᴛᴀᴘ ᴜᴛᴜʜ ᴀᴛᴀᴜ ᴛɪᴅᴀᴋ ʜɪʟᴀɴɢ ᴅᴀɴ ᴀᴍᴀɴ, ᴛɪɴɢɢᴀʟ ᴛᴀɴʏᴀᴋᴀɴ ᴋᴇᴘᴀᴅᴀ ᴀᴅᴍɪɴ ʀᴇsᴍɪ
 </blockquote>"""
 
+IMG_URL= "https://files.catbox.moe/tdeh91.jpg"
 
 @app.on_message(filters.command("start"))
 async def start_handler(client, message):
-    return await message.reply(
+    return await message.reply_photo(
+        IMG_URL,
         TEXT_START,
-        disable_web_page_preview=True,
         reply_markup=InlineKeyboardMarkup(
             [
                 [InlineKeyboardButton("Channel", url="t.me/galerinakalwebsite")],
@@ -75,7 +76,7 @@ async def payment24_callback(client, callback_query):
         "🏧 **BNI:** `188-652-0309` A/n YOSE RIZAL\n\n"
         "KLIK ADMIN GALERY NAKAL UNTUK TANYA TALENT VCS READY\n"
     )
-    return await callback_query.message.edit_text(
+    return await callback_query.message.edit(
         text,
         reply_markup=InlineKeyboardMarkup(
             [
@@ -101,7 +102,7 @@ async def payment12_callback(client, callback_query):
         "🏧 **BNI:** `188-652-0309` A/n YOSE RIZAL\n\n"
         "KLIK ADMIN GALERY NAKAL UNTUK TANYA TALENT VCS READY\n"
     )
-    return await callback_query.message.edit_text(
+    return await callback_query.message.edit(
         text,
         reply_markup=InlineKeyboardMarkup(
             [
@@ -127,7 +128,7 @@ async def payment6_callback(client, callback_query):
         "🏧 **BNI:** `188-652-0309` A/n YOSE RIZAL\n\n"
         "KLIK ADMIN GALERY NAKAL UNTUK TANYA TALENT VCS READY\n"
     )
-    return await callback_query.message.edit_text(
+    return await callback_query.message.edit(
         text,
         reply_markup=InlineKeyboardMarkup(
             [
@@ -153,7 +154,7 @@ async def payment3_callback(client, callback_query):
         "🏧 **BNI:** `188-652-0309` A/n YOSE RIZAL\n\n"
         "KLIK ADMIN GALERY NAKAL UNTUK TANYA TALENT VCS READY\n"
     )
-    return await callback_query.message.edit_text(
+    return await callback_query.message.edit(
         text,
         reply_markup=InlineKeyboardMarkup(
             [
@@ -175,7 +176,7 @@ async def payment3_callback(client, callback_query):
 
 @app.on_callback_query(filters.regex("back_to_menu"))
 async def back_to_menu(client, callback_query):
-    return await callback_query.message.edit_text(
+    return await callback_query.message.edit(
         TEXT_START,
         disable_web_page_preview=True,
         reply_markup=InlineKeyboardMarkup(
