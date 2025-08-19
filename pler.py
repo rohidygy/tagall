@@ -25,7 +25,8 @@ TEXT_START = """<blockquote expandable>
 ☘️ᴋᴏɴᴛᴇɴ ᴛᴇᴛᴀᴘ ᴜᴛᴜʜ ᴀᴛᴀᴜ ᴛɪᴅᴀᴋ ʜɪʟᴀɴɢ ᴅᴀɴ ᴀᴍᴀɴ, ᴛɪɴɢɢᴀʟ ᴛᴀɴʏᴀᴋᴀɴ ᴋᴇᴘᴀᴅᴀ ᴀᴅᴍɪɴ ʀᴇsᴍɪ
 </blockquote>"""
 
-IMG_URL= "https://files.catbox.moe/tdeh91.jpg"
+IMG_URL = "https://files.catbox.moe/tdeh91.jpg"
+
 
 @app.on_message(filters.command("start"))
 async def start_handler(client, message):
