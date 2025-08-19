@@ -34,17 +34,11 @@ async def start_handler(client, message):
                     InlineKeyboardButton("Admin 2", url="t.me/officialgalerinakal"),
                 ],
                 [
-                    InlineKeyboardButton(
-                        "Kode Akses 5H", callback_data="payment24"
-                    ),
-                    InlineKeyboardButton(
-                        "Kode Akses 10H", callback_data="payment12"
-                    ),
+                    InlineKeyboardButton("Kode Akses 5H", callback_data="payment24"),
+                    InlineKeyboardButton("Kode Akses 10H", callback_data="payment12"),
                 ],
                 [
-                    InlineKeyboardButton(
-                        "Kode Akses 14H", callback_data="payment6"
-                    ),
+                    InlineKeyboardButton("Kode Akses 14H", callback_data="payment6"),
                     InlineKeyboardButton(
                         "Vcs Talent Galeri Nakal", callback_data="payment3"
                     ),
@@ -176,9 +170,7 @@ async def back_to_menu(client, callback_query):
                     InlineKeyboardButton("Admin 2", url="t.me/officialgalerinakal"),
                 ],
                 [
-                    InlineKeyboardButton(
-                        "Kode akses 5H", callback_data="payment24"
-                    ),
+                    InlineKeyboardButton("Kode akses 5H", callback_data="payment24"),
                     InlineKeyboardButton(
                         "KODE AKSES 10 HARI", callback_data="payment12"
                     ),
