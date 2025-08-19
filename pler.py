@@ -144,10 +144,11 @@ async def back_to_menu(event):
     await event.edit(
         helptext,
         buttons=[
-            [Button.url("Admin 1", "t.me/amiragalerinakal")],
-            [Button.url("Admin 2", "t.me/officialgalerinakal")],
+            [Button.url("Channel", "t.me/galerinakalwebsite")],
+            [Button.url("Live Chat Galeri Nakal", "t.me/telegalerinakal_bot")],
             [
-                Button.url("Channel", "t.me/galerinakalwebsite"),
+                Button.url("Admin 1", "t.me/amiragalerinakal"),
+                Button.url("Admin 2", "t.me/officialgalerinakal"),
             ],
             [
                 Button.inline("KODE AKSES 5 HARI", b"payment24"),
@@ -285,3 +286,4 @@ async def mentionalls(event):
 
 print("BOT AKTIF KONTOL")
 kntl.run_until_disconnected()
+
