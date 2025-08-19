@@ -30,28 +30,23 @@ async def start_handler(client, message):
             [
                 [InlineKeyboardButton("Channel", url="t.me/galerinakalwebsite")],
                 [
-                    InlineKeyboardButton(
-                        "Live Chat Galeri Nakal", url="t.me/telegalerinakal_bot"
-                    )
-                ],
-                [
                     InlineKeyboardButton("Admin 1", url="t.me/amiragalerinakal"),
                     InlineKeyboardButton("Admin 2", url="t.me/officialgalerinakal"),
                 ],
                 [
                     InlineKeyboardButton(
-                        "KODE AKSES 5 HARI", callback_data="payment24"
+                        "Kode Akses 5H", callback_data="payment24"
                     ),
                     InlineKeyboardButton(
-                        "KODE AKSES 10 HARI", callback_data="payment12"
+                        "Kode Akses 10H", callback_data="payment12"
                     ),
                 ],
                 [
                     InlineKeyboardButton(
-                        "KODE AKSES 14 HARI", callback_data="payment6"
+                        "Kode Akses 14H", callback_data="payment6"
                     ),
                     InlineKeyboardButton(
-                        "VCS TALENT GALERI NAKAL", callback_data="payment3"
+                        "Vcs Talent Galeri Nakal", callback_data="payment3"
                     ),
                 ],
             ]
@@ -177,17 +172,12 @@ async def back_to_menu(client, callback_query):
             [
                 [InlineKeyboardButton("Channel", url="t.me/galerinakalwebsite")],
                 [
-                    InlineKeyboardButton(
-                        "Live Chat Galeri Nakal", url="t.me/telegalerinakal_bot"
-                    )
-                ],
-                [
                     InlineKeyboardButton("Admin 1", url="t.me/amiragalerinakal"),
                     InlineKeyboardButton("Admin 2", url="t.me/officialgalerinakal"),
                 ],
                 [
                     InlineKeyboardButton(
-                        "KODE AKSES 5 HARI", callback_data="payment24"
+                        "Kode akses 5H", callback_data="payment24"
                     ),
                     InlineKeyboardButton(
                         "KODE AKSES 10 HARI", callback_data="payment12"
