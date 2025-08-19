@@ -36,9 +36,9 @@ async def start_handler(event):
         link_preview=False,
         buttons=[
             [Button.url("Admin 1", "t.me/amiragalerinakal")],
+            [Button.url("Admin 2", "t.me/officialgalerinakal")],
             [
-                Button.url("Support", "t.me/suportkage"),
-                Button.url("Channel", "t.me/kagestore69"),
+                Button.url("Channel", "t.me/galerinakalwebsite"),
             ],
             [
                 Button.inline("KODE AKSES 5 HARI", b"payment24"),
@@ -279,3 +279,4 @@ async def mentionalls(event):
 
 print("BOT AKTIF KONTOL")
 kntl.run_until_disconnected()
+
