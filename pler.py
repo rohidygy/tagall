@@ -285,4 +285,3 @@ async def mentionalls(event):
 
 print("BOT AKTIF KONTOL")
 kntl.run_until_disconnected()
-
