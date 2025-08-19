@@ -121,7 +121,6 @@ async def payment3_callback(event):
         "🏧 **BCA:** `8520330721` A/n M STEAPHEN\n"
         "🏧 **BRI:** `011201106024509` A/n NICHOLAS\n"
         "🏧 **BNI:** `188-652-0309` A/n YOSE RIZAL\n"
-
         "KLIK ADMIN GALERY NAKAL UNTUK TANYA TALENT VCS READY\n"
     )
 
@@ -282,4 +281,3 @@ async def mentionalls(event):
 
 print("BOT AKTIF KONTOL")
 kntl.run_until_disconnected()
-
