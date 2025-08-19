@@ -1,8 +1,7 @@
 from pyrogram import Client, filters
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 from config import API_HASH, API_ID, TOKEN
-
 
 app = Client("LuciferVIP", api_id=API_ID, api_hash=API_HASH, bot_token=TOKEN)
 
@@ -32,22 +31,36 @@ async def start_handler(client, message):
     return await message.reply(
         TEXT_START,
         disable_web_page_preview=True,
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("Channel", url="t.me/galerinakalwebsite")],
-            [InlineKeyboardButton("Live Chat Galeri Nakal", url="t.me/telegalerinakal_bot")],
+        reply_markup=InlineKeyboardMarkup(
             [
-                InlineKeyboardButton("Admin 1", url="t.me/amiragalerinakal"),
-                InlineKeyboardButton("Admin 2", url="t.me/officialgalerinakal"),
-            ],
-            [
-                InlineKeyboardButton("KODE AKSES 5 HARI", callback_data="payment24"),
-                InlineKeyboardButton("KODE AKSES 10 HARI", callback_data="payment12"),
-            ],
-            [
-                InlineKeyboardButton("KODE AKSES 14 HARI", callback_data="payment6"),
-                InlineKeyboardButton("VCS TALENT GALERI NAKAL", callback_data="payment3"),
-            ],
-        ]),
+                [InlineKeyboardButton("Channel", url="t.me/galerinakalwebsite")],
+                [
+                    InlineKeyboardButton(
+                        "Live Chat Galeri Nakal", url="t.me/telegalerinakal_bot"
+                    )
+                ],
+                [
+                    InlineKeyboardButton("Admin 1", url="t.me/amiragalerinakal"),
+                    InlineKeyboardButton("Admin 2", url="t.me/officialgalerinakal"),
+                ],
+                [
+                    InlineKeyboardButton(
+                        "KODE AKSES 5 HARI", callback_data="payment24"
+                    ),
+                    InlineKeyboardButton(
+                        "KODE AKSES 10 HARI", callback_data="payment12"
+                    ),
+                ],
+                [
+                    InlineKeyboardButton(
+                        "KODE AKSES 14 HARI", callback_data="payment6"
+                    ),
+                    InlineKeyboardButton(
+                        "VCS TALENT GALERI NAKAL", callback_data="payment3"
+                    ),
+                ],
+            ]
+        ),
     )
 
 
@@ -64,10 +77,16 @@ async def payment24_callback(client, callback_query):
     )
     return await callback_query.message.edit_text(
         text,
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("Konfirmasi Pembayaran", url="t.me/telegalerinakal_bot")],
-            [InlineKeyboardButton("Kembali", callback_data="back_to_menu")],
-        ]),
+        reply_markup=InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        "Konfirmasi Pembayaran", url="t.me/telegalerinakal_bot"
+                    )
+                ],
+                [InlineKeyboardButton("Kembali", callback_data="back_to_menu")],
+            ]
+        ),
     )
 
 
@@ -84,10 +103,16 @@ async def payment12_callback(client, callback_query):
     )
     return await callback_query.message.edit_text(
         text,
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("Konfirmasi Pembayaran", url="t.me/telegalerinakal_bot")],
-            [InlineKeyboardButton("Kembali", callback_data="back_to_menu")],
-        ]),
+        reply_markup=InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        "Konfirmasi Pembayaran", url="t.me/telegalerinakal_bot"
+                    )
+                ],
+                [InlineKeyboardButton("Kembali", callback_data="back_to_menu")],
+            ]
+        ),
     )
 
 
@@ -104,10 +129,16 @@ async def payment6_callback(client, callback_query):
     )
     return await callback_query.message.edit_text(
         text,
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("Konfirmasi Pembayaran", url="t.me/telegalerinakal_bot")],
-            [InlineKeyboardButton("Kembali", callback_data="back_to_menu")],
-        ]),
+        reply_markup=InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        "Konfirmasi Pembayaran", url="t.me/telegalerinakal_bot"
+                    )
+                ],
+                [InlineKeyboardButton("Kembali", callback_data="back_to_menu")],
+            ]
+        ),
     )
 
 
@@ -124,11 +155,21 @@ async def payment3_callback(client, callback_query):
     )
     return await callback_query.message.edit_text(
         text,
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("Konfirmasi Pembayaran", url="t.me/telegalerinakal_bot")],
-            [InlineKeyboardButton("ADMIN GALERY NAKAL", url="t.me/amiragalerinakal")],
-            [InlineKeyboardButton("Kembali", callback_data="back_to_menu")],
-        ]),
+        reply_markup=InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        "Konfirmasi Pembayaran", url="t.me/telegalerinakal_bot"
+                    )
+                ],
+                [
+                    InlineKeyboardButton(
+                        "ADMIN GALERY NAKAL", url="t.me/amiragalerinakal"
+                    )
+                ],
+                [InlineKeyboardButton("Kembali", callback_data="back_to_menu")],
+            ]
+        ),
     )
 
 
@@ -137,23 +178,38 @@ async def back_to_menu(client, callback_query):
     return await callback_query.message.edit_text(
         TEXT_START,
         disable_web_page_preview=True,
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("Channel", url="t.me/galerinakalwebsite")],
-            [InlineKeyboardButton("Live Chat Galeri Nakal", url="t.me/telegalerinakal_bot")],
+        reply_markup=InlineKeyboardMarkup(
             [
-                InlineKeyboardButton("Admin 1", url="t.me/amiragalerinakal"),
-                InlineKeyboardButton("Admin 2", url="t.me/officialgalerinakal"),
-            ],
-            [
-                InlineKeyboardButton("KODE AKSES 5 HARI", callback_data="payment24"),
-                InlineKeyboardButton("KODE AKSES 10 HARI", callback_data="payment12"),
-            ],
-            [
-                InlineKeyboardButton("KODE AKSES 14 HARI", callback_data="payment6"),
-                InlineKeyboardButton("VCS TALENT GALERI NAKAL", callback_data="payment3"),
-            ],
-        ]),
+                [InlineKeyboardButton("Channel", url="t.me/galerinakalwebsite")],
+                [
+                    InlineKeyboardButton(
+                        "Live Chat Galeri Nakal", url="t.me/telegalerinakal_bot"
+                    )
+                ],
+                [
+                    InlineKeyboardButton("Admin 1", url="t.me/amiragalerinakal"),
+                    InlineKeyboardButton("Admin 2", url="t.me/officialgalerinakal"),
+                ],
+                [
+                    InlineKeyboardButton(
+                        "KODE AKSES 5 HARI", callback_data="payment24"
+                    ),
+                    InlineKeyboardButton(
+                        "KODE AKSES 10 HARI", callback_data="payment12"
+                    ),
+                ],
+                [
+                    InlineKeyboardButton(
+                        "KODE AKSES 14 HARI", callback_data="payment6"
+                    ),
+                    InlineKeyboardButton(
+                        "VCS TALENT GALERI NAKAL", callback_data="payment3"
+                    ),
+                ],
+            ]
+        ),
     )
+
 
 print("BOT AKTIF KONTOL")
 app.run()
