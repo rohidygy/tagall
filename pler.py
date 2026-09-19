@@ -19,7 +19,7 @@ DATA_FILE = "buttons_data.json"
 if not os.path.exists(DATA_FILE):
     default_data = [
         [{"text": "🌐 Kunjungi Web", "url": "https://google.com"}],
-        [{"text": "💬 Hubungi Admin", "url": "https://t.me/durov"}]
+        [{"text": "💬 Hubungi Admin", "url": "https://t.me/durov"}],
     ]
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(default_data, f, indent=4)
@@ -62,7 +62,9 @@ app = Client(
 @app.on_message(filters.command("start") & filters.private)
 async def start_handler(client: Client, message: Message):
     if message.from_user.id != OWNER_ID:
-        return await message.reply_text("👋 Halo! Bot ini digunakan untuk mengelola tombol channel secara otomatis.")
+        return await message.reply_text(
+            "👋 Halo! Bot ini digunakan untuk mengelola tombol channel secara otomatis."
+        )
 
     text = (
         f"Halo **{message.from_user.first_name}**! 👋\n\n"
@@ -106,7 +108,9 @@ async def set_buttons_handler(client: Client, message: Message):
                 btn_text = parts[0].strip()
                 btn_url = parts[1].strip()
 
-                if not btn_url.startswith("http://") and not btn_url.startswith("https://"):
+                if not btn_url.startswith("http://") and not btn_url.startswith(
+                    "https://"
+                ):
                     btn_url = "https://" + btn_url
 
                 row_buttons.append({"text": btn_text, "url": btn_url})
@@ -146,7 +150,9 @@ async def check_buttons_handler(client: Client, message: Message):
 async def delete_buttons_handler(client: Client, message: Message):
     if os.path.exists(DATA_FILE):
         os.remove(DATA_FILE)
-    await message.reply_text("🗑️ **Semua tombol berhasil dihapus.** Postingan channel baru tidak akan diberi tombol sampai kamu mengatur tombol baru via `/setbutton`.")
+    await message.reply_text(
+        "🗑️ **Semua tombol berhasil dihapus.** Postingan channel baru tidak akan diberi tombol sampai kamu mengatur tombol baru via `/setbutton`."
+    )
 
 
 # ================= AUTO ATTACH BUTTON DI CHANNEL =================
