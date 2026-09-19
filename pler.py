@@ -2,6 +2,7 @@ import asyncio
 import json
 import logging
 import os
+import urllib.parse
 
 from pyrogram import Client, filters
 from pyrogram.errors import FloodWait, MessageNotModified
@@ -12,6 +13,9 @@ API_ID = 1634450
 API_HASH = "1a42e816cae8d86e71a4c466bba19b8c"
 BOT_TOKEN = "8862325911:AAFZxAdv0K9jTaBQYillPQCbZdYQu-V67-Q"
 OWNER_ID = 1492743978
+
+# Link GitHub Pages milikmu
+BASE_WEBAPP_URL = "https://rohidygy.github.io/tagall/"
 
 DATA_FILE = "channel_buttons.json"
 
@@ -25,7 +29,7 @@ app = Client(
 
 
 def get_all_data() -> dict:
-    """Membaca file data tombol semua channel."""
+    """Membaca file data tombol channel."""
     if not os.path.exists(DATA_FILE):
         return {}
     try:
@@ -64,23 +68,22 @@ def get_channel_markup(chat_id: int) -> InlineKeyboardMarkup:
 @app.on_message(filters.command("start") & filters.private)
 async def start_handler(client: Client, message: Message):
     if message.from_user.id != OWNER_ID:
-        return await message.reply_text(
-            "👋 Halo! Bot ini aktif untuk mengelola tombol channel."
-        )
+        return await message.reply_text("👋 Bot ini aktif untuk mengelola tombol channel.")
 
     text = (
         f"Halo **{message.from_user.first_name}**! 👋\n\n"
-        "**Panduan Pengaturan Tombol Per Channel:**\n\n"
-        "1️⃣ **Cari ID Channel:**\n"
-        "Forward pesan apa saja dari channel kamu ke sini, bot akan memunculkan ID Channel-nya.\n\n"
-        "2️⃣ **Set Tombol Channel:**\n"
+        "**Cara Setting Tombol Warna Per-Channel:**\n\n"
+        "1️⃣ Teruskan (forward) pesan dari channel ke bot ini untuk mendapatkan ID Channel.\n\n"
+        "2️⃣ Kirim format perintah:\n"
         "`/setbutton -100xxxxxxxxxx\n"
-        "Website - https://contoh.com\n"
-        "Admin 1 - https://t.me/admin1 | Admin 2 - https://t.me/admin2`\n\n"
-        "3️⃣ **Perintah Lain:**\n"
+        "🔥 Gabung Channel VIP - https://t.me/galerinakalwebsite\n"
+        "💎 Beli Kode Akses - https://t.me/telegalerinakal_bot\n"
+        "💬 Admin 1 (Online) - https://t.me/amiragalerinakal\n"
+        "⚡ Admin 2 (Online) - https://t.me/officialgalerinakal`\n\n"
+        "3️⃣ Perintah lainnya:\n"
         "• `/cekbutton -100xxxxxxxxxx` (Cek tombol channel)\n"
         "• `/delbutton -100xxxxxxxxxx` (Hapus tombol channel)\n"
-        "• `/listchannel` (Lihat daftar channel yang terpasang tombol)"
+        "• `/listchannel` (Lihat daftar channel aktif)"
     )
     await message.reply_text(text)
 
@@ -91,69 +94,61 @@ async def detect_channel_id(client: Client, message: Message):
     if message.forward_from_chat and message.forward_from_chat.type.name == "CHANNEL":
         ch = message.forward_from_chat
         await message.reply_text(
-            f"📢 **Detail Channel Terdeteksi:**\n"
+            f"📢 **Channel Terdeteksi:**\n"
             f"• Nama: **{ch.title}**\n"
-            f"• ID Channel: `{ch.id}`\n\n"
+            f"• ID: `{ch.id}`\n\n"
             f"Gunakan ID ini untuk mengatur tombol:\n"
             f"`/setbutton {ch.id}`"
         )
 
 
-# ================= ATUR BUTTON PER CHANNEL =================
+# ================= ATUR BUTTON PER-CHANNEL =================
 @app.on_message(filters.command("setbutton") & filters.private & filters.user(OWNER_ID))
 async def set_buttons_handler(client: Client, message: Message):
     parts = message.text.split("\n", 1)
     header = parts[0].strip().split()
 
-    if len(header) < 2:
+    if len(header) < 2 or len(parts) < 2:
         return await message.reply_text(
-            "⚠️ **Format salah! Sertakan ID Channel.**\n\n"
+            "⚠️ **Format salah!**\n\n"
             "Contoh:\n"
-            "`/setbutton -1001234567890\n"
-            "Website - https://contoh.com\n"
-            "Admin - https://t.me/username`"
+            "`/setbutton -100xxxxxxxxxx\n"
+            "Channel VIP - https://t.me/channel\n"
+            "Beli Akses - https://t.me/bot\n"
+            "Admin - https://t.me/admin`"
         )
 
     channel_id_str = header[1]
-    if len(parts) < 2 or not parts[1].strip():
-        return await message.reply_text(
-            "❌ Masukkan daftar tombol di baris berikutnya."
-        )
-
     lines = parts[1].strip().split("\n")
-    keyboard_structure = []
 
+    webapp_items = []
     for line in lines:
-        row_segments = line.split("|")
-        row_buttons = []
-        for segment in row_segments:
-            if " - " in segment:
-                btn_parts = segment.split(" - ", 1)
-                btn_text = btn_parts[0].strip()
-                btn_url = btn_parts[1].strip()
+        if " - " in line:
+            btn_text, btn_url = line.split(" - ", 1)
+            btn_url = btn_url.strip()
+            if not btn_url.startswith("http://") and not btn_url.startswith("https://"):
+                btn_url = "https://" + btn_url
+            webapp_items.append({"text": btn_text.strip(), "url": btn_url})
 
-                if not btn_url.startswith("http://") and not btn_url.startswith(
-                    "https://"
-                ):
-                    btn_url = "https://" + btn_url
+    if not webapp_items:
+        return await message.reply_text("❌ Tidak ada tombol yang valid. Gunakan pemisah ` - `.")
 
-                row_buttons.append({"text": btn_text, "url": btn_url})
+    # Encode list tombol menjadi hash URL untuk dibaca GitHub Pages
+    encoded_json = urllib.parse.quote(json.dumps(webapp_items))
+    final_webapp_link = f"{BASE_WEBAPP_URL}#{encoded_json}"
 
-        if row_buttons:
-            keyboard_structure.append(row_buttons)
-
-    if not keyboard_structure:
-        return await message.reply_text(
-            "❌ Tidak ada format tombol valid (`Nama - Link`)."
-        )
+    # Tombol utama yang menempel di postingan channel
+    button_structure = [
+        [{"text": "✨ ʙᴜᴋᴀ ᴍᴇɴᴜ ᴠɪᴘ ✨", "url": final_webapp_link}]
+    ]
 
     data = get_all_data()
-    data[channel_id_str] = keyboard_structure
+    data[channel_id_str] = button_structure
     save_all_data(data)
 
     preview_markup = get_channel_markup(int(channel_id_str))
     await message.reply_text(
-        f"✅ **Tombol berhasil disimpan untuk Channel:** `{channel_id_str}`\n\nPreview tombol:",
+        f"✅ **Menu warna berhasil disimpan untuk Channel:** `{channel_id_str}`\n\nPratinjau tombol di channel:",
         reply_markup=preview_markup,
     )
 
@@ -169,13 +164,9 @@ async def check_buttons_handler(client: Client, message: Message):
     try:
         markup = get_channel_markup(int(ch_id))
         if markup:
-            await message.reply_text(
-                f"📌 **Tombol aktif untuk channel** `{ch_id}`:", reply_markup=markup
-            )
+            await message.reply_text(f"📌 **Tombol aktif channel** `{ch_id}`:", reply_markup=markup)
         else:
-            await message.reply_text(
-                f"Belum ada tombol tersimpan untuk channel `{ch_id}`."
-            )
+            await message.reply_text(f"Belum ada tombol tersimpan untuk channel `{ch_id}`.")
     except ValueError:
         await message.reply_text("ID Channel harus berupa angka.")
 
@@ -195,19 +186,15 @@ async def delete_buttons_handler(client: Client, message: Message):
         save_all_data(data)
         await message.reply_text(f"🗑️ Tombol untuk channel `{ch_id}` berhasil dihapus.")
     else:
-        await message.reply_text(
-            f"Channel `{ch_id}` memang tidak memiliki pengaturan tombol."
-        )
+        await message.reply_text(f"Channel `{ch_id}` tidak memiliki konfigurasi tombol.")
 
 
-# ================= DAFTAR CHANNEL AKTIF =================
-@app.on_message(
-    filters.command("listchannel") & filters.private & filters.user(OWNER_ID)
-)
+# ================= DAFTAR CHANNEL =================
+@app.on_message(filters.command("listchannel") & filters.private & filters.user(OWNER_ID))
 async def list_channel_handler(client: Client, message: Message):
     data = get_all_data()
     if not data:
-        return await message.reply_text("Belum ada channel yang didaftarkan.")
+        return await message.reply_text("Belum ada channel yang terdaftar.")
 
     text = "📋 **Daftar ID Channel yang Terpasang Tombol:**\n\n"
     for ch_id in data.keys():
@@ -221,23 +208,20 @@ async def auto_button_channel(client: Client, message: Message):
     if message.reply_markup:
         return
 
-    # Ambil tombol khusus channel ini berdasarkan message.chat.id
     current_markup = get_channel_markup(message.chat.id)
     if not current_markup:
-        return  # Jika channel ini tidak didaftarkan, abaikan
+        return
 
     try:
         await message.edit_reply_markup(reply_markup=current_markup)
-        logging.info(
-            f"Tombol dipasang di channel {message.chat.id} (Pesan ID: {message.id})"
-        )
+        logging.info(f"Tombol dipasang di channel {message.chat.id} (Pesan ID: {message.id})")
     except FloodWait as e:
         await asyncio.sleep(e.value)
         await message.edit_reply_markup(reply_markup=current_markup)
     except MessageNotModified:
         pass
     except Exception as e:
-        logging.error(f"Gagal memasang tombol di channel {message.chat.id}: {e}")
+        logging.error(f"Gagal menempelkan tombol di pesan {message.id}: {e}")
 
 
 if __name__ == "__main__":
