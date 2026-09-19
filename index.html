@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Menu VIP</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: #0b0f19;
+      color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px;
+      min-height: 100vh;
+    }
+    .badge {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+    }
+    h1 {
+      font-size: 22px;
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+    p {
+      font-size: 13px;
+      color: #94a3b8;
+      margin-bottom: 24px;
+    }
+    .btn-container {
+      width: 100%;
+      max-width: 360px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 15px;
+      font-size: 15px;
+      font-weight: 700;
+      color: #ffffff;
+      text-decoration: none;
+      border-radius: 14px;
+      transition: transform 0.1s ease, filter 0.2s ease;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    }
+    .btn:active {
+      transform: scale(0.98);
+      filter: brightness(0.9);
+    }
+    /* Warna gradasi kustom tombol */
+    .btn-pink   { background: linear-gradient(135deg, #f43f5e, #be123c); }
+    .btn-purple { background: linear-gradient(135deg, #a855f7, #6b21a8); }
+    .btn-cyan   { background: linear-gradient(135deg, #06b6d4, #0e7490); }
+    .btn-gold   { background: linear-gradient(135deg, #f59e0b, #b45309); }
+  </style>
+</head>
+<body>
+
+  <div class="badge">Eksklusif Portal</div>
+  <h1>PILIHAN AKSES VIP</h1>
+  <p>Silakan pilih layanan di bawah ini:</p>
+
+  <div class="btn-container">
+    <a href="https://t.me/galerinakalwebsite" class="btn btn-pink">
+      🔥 GABUNG CHANNEL VIP
+    </a>
+    <a href="https://t.me/telegalerinakal_bot" class="btn btn-purple">
+      💎 BELI KODE AKSES BOT
+    </a>
+    <a href="https://t.me/amiragalerinakal" class="btn btn-cyan">
+      💬 CHAT ADMIN 1 (ONLINE)
+    </a>
+    <a href="https://t.me/officialgalerinakal" class="btn btn-gold">
+      ⚡ CHAT ADMIN 2 (ONLINE)
+    </a>
+  </div>
+
+  <script>
+    // Membuka penuh tampilan di Telegram WebApp
+    window.Telegram.WebApp.ready();
+    window.Telegram.WebApp.expand();
+  </script>
+</body>
+</html>
