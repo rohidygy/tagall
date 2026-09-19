@@ -1,10 +1,11 @@
 import re
 
+
 @app.on_message(filters.private & filters.command("setweb") & filters.user(OWNER_ID))
 async def set_webapp_buttons_handler(client: Client, message: Message):
     lines = [line.strip() for line in message.text.splitlines() if line.strip()]
     first_line = lines[0]
-    
+
     # Ambil ID Channel
     parts = first_line.split()
     if len(parts) < 2 or len(lines) < 2:
@@ -44,14 +45,16 @@ async def set_webapp_buttons_handler(client: Client, message: Message):
             webapp_items.append({"text": name.strip(), "url": link})
 
     if not webapp_items:
-        return await message.reply_text("❌ Format salah! Gunakan pemisah ` - ` pada tiap link tombol.")
+        return await message.reply_text(
+            "❌ Format salah! Gunakan pemisah ` - ` pada tiap link tombol."
+        )
 
     # Susun paket data (Judul + Daftar Tombol)
     payload = {
         "title": custom_title,
         "subtitle": custom_subtitle,
         "badge": custom_badge,
-        "items": webapp_items
+        "items": webapp_items,
     }
 
     # Encode ke parameter URL hash
@@ -59,9 +62,7 @@ async def set_webapp_buttons_handler(client: Client, message: Message):
     final_webapp_link = f"{BASE_WEBAPP_URL}#{encoded_json}"
 
     # Tombol yang ditempel ke postingan channel
-    button_structure = [
-        [{"text": "✨ ʙᴜᴋᴀ ᴍᴇɴᴜ ᴠɪᴘ ✨", "url": final_webapp_link}]
-    ]
+    button_structure = [[{"text": "✨ ʙᴜᴋᴀ ᴍᴇɴᴜ ᴠɪᴘ ✨", "url": final_webapp_link}]]
 
     data = get_all_data()
     data[channel_id_str] = button_structure
@@ -74,5 +75,5 @@ async def set_webapp_buttons_handler(client: Client, message: Message):
         f"• **Judul:** `{custom_title}`\n"
         f"• **Subjudul:** `{custom_subtitle}`\n"
         f"• **Channel:** `{channel_id_str}`",
-        reply_markup=preview
+        reply_markup=preview,
     )
