@@ -25,10 +25,7 @@ logging.basicConfig(
 )
 
 app = Client(
-    "channel_button_manager",
-    api_id=API_ID,
-    api_hash=API_HASH,
-    bot_token=BOT_TOKEN
+    "channel_button_manager", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN
 )
 
 
@@ -74,6 +71,7 @@ def save_admins(admins: list):
 def check_is_admin(_, __, message: Message):
     return message.from_user and (message.from_user.id in get_admins())
 
+
 is_bot_admin = filters.create(check_is_admin)
 
 
@@ -101,9 +99,11 @@ async def start_handler(client: Client, message: Message):
     admins = get_admins()
 
     if user_id not in admins:
-        return await message.reply_text("👋 Bot ini aktif untuk mengelola tombol channel.")
+        return await message.reply_text(
+            "👋 Bot ini aktif untuk mengelola tombol channel."
+        )
 
-    is_owner = (user_id == OWNER_ID)
+    is_owner = user_id == OWNER_ID
     role_text = "👑 **Owner Utama**" if is_owner else "🛠 **Admin Terdaftar**"
 
     text = (
@@ -151,11 +151,15 @@ async def add_admin_handler(client: Client, message: Message):
 
     admins = get_admins()
     if target_id in admins:
-        return await message.reply_text(f"Pengguna `{target_id}` sudah memiliki akses admin.")
+        return await message.reply_text(
+            f"Pengguna `{target_id}` sudah memiliki akses admin."
+        )
 
     admins.append(target_id)
     save_admins(admins)
-    await message.reply_text(f"✅ User ID `{target_id}` berhasil diberikan akses admin bot!")
+    await message.reply_text(
+        f"✅ User ID `{target_id}` berhasil diberikan akses admin bot!"
+    )
 
 
 @app.on_message(filters.private & filters.command("deladmin") & filters.user(OWNER_ID))
@@ -174,11 +178,15 @@ async def del_admin_handler(client: Client, message: Message):
 
     admins = get_admins()
     if target_id not in admins:
-        return await message.reply_text(f"User ID `{target_id}` tidak ditemukan di daftar admin.")
+        return await message.reply_text(
+            f"User ID `{target_id}` tidak ditemukan di daftar admin."
+        )
 
     admins.remove(target_id)
     save_admins(admins)
-    await message.reply_text(f"🗑️ Akses admin untuk User ID `{target_id}` berhasil dicabut.")
+    await message.reply_text(
+        f"🗑️ Akses admin untuk User ID `{target_id}` berhasil dicabut."
+    )
 
 
 @app.on_message(filters.private & filters.command("listadmin") & filters.user(OWNER_ID))
@@ -255,7 +263,7 @@ async def set_normal_buttons_handler(client: Client, message: Message):
     preview = get_channel_markup(int(channel_id_str))
     await message.reply_text(
         f"✅ **Tombol Channel Biasa Berhasil Disimpan!**\nChannel: `{channel_id_str}`\n\nPratinjau:",
-        reply_markup=preview
+        reply_markup=preview,
     )
 
 
@@ -303,21 +311,21 @@ async def set_webapp_buttons_handler(client: Client, message: Message):
             webapp_items.append({"text": name.strip(), "url": link})
 
     if not webapp_items:
-        return await message.reply_text("❌ Format salah! Gunakan pemisah ` - ` pada setiap baris menu.")
+        return await message.reply_text(
+            "❌ Format salah! Gunakan pemisah ` - ` pada setiap baris menu."
+        )
 
     payload = {
         "title": custom_title,
         "subtitle": custom_subtitle,
         "badge": custom_badge,
-        "items": webapp_items
+        "items": webapp_items,
     }
 
     encoded_json = urllib.parse.quote(json.dumps(payload))
     final_webapp_link = f"{BASE_WEBAPP_URL}#{encoded_json}"
 
-    button_structure = [
-        [{"text": "✨ ʙᴜᴋᴀ ᴍᴇɴᴜ ᴠɪᴘ ✨", "url": final_webapp_link}]
-    ]
+    button_structure = [[{"text": "✨ ʙᴜᴋᴀ ᴍᴇɴᴜ ᴠɪᴘ ✨", "url": final_webapp_link}]]
 
     data = get_all_data()
     data[channel_id_str] = button_structure
@@ -331,7 +339,7 @@ async def set_webapp_buttons_handler(client: Client, message: Message):
         f"• **Subjudul:** `{custom_subtitle}`\n"
         f"• **Channel:** `{channel_id_str}`\n\n"
         "Pratinjau tombol channel:",
-        reply_markup=preview
+        reply_markup=preview,
     )
 
 
@@ -346,9 +354,13 @@ async def check_buttons_handler(client: Client, message: Message):
     try:
         markup = get_channel_markup(int(ch_id))
         if markup:
-            await message.reply_text(f"📌 **Tombol aktif channel** `{ch_id}`:", reply_markup=markup)
+            await message.reply_text(
+                f"📌 **Tombol aktif channel** `{ch_id}`:", reply_markup=markup
+            )
         else:
-            await message.reply_text(f"Belum ada tombol tersimpan untuk channel `{ch_id}`.")
+            await message.reply_text(
+                f"Belum ada tombol tersimpan untuk channel `{ch_id}`."
+            )
     except ValueError:
         await message.reply_text("ID Channel harus berupa angka.")
 
@@ -366,7 +378,9 @@ async def delete_buttons_handler(client: Client, message: Message):
     if ch_id in data:
         del data[ch_id]
         save_all_data(data)
-        await message.reply_text(f"🗑️ Konfigurasi tombol channel `{ch_id}` berhasil dihapus.")
+        await message.reply_text(
+            f"🗑️ Konfigurasi tombol channel `{ch_id}` berhasil dihapus."
+        )
     else:
         await message.reply_text(f"Channel `{ch_id}` tidak ditemukan di daftar.")
 
