@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Akses VIP Portal</title>
+  <title>Portal VIP</title>
   <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
@@ -21,7 +21,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 30px 18px;
+      padding: 28px 16px;
       min-height: 100vh;
     }
 
@@ -32,7 +32,7 @@
       border-radius: 20px;
       font-size: 11px;
       letter-spacing: 1.5px;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
       text-transform: uppercase;
       color: #38bdf8;
       font-weight: 600;
@@ -49,7 +49,7 @@
     p.subtitle {
       font-size: 13px;
       color: #94a3b8;
-      margin-bottom: 26px;
+      margin-bottom: 24px;
       text-align: center;
     }
 
@@ -58,15 +58,13 @@
       max-width: 380px;
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 13px;
     }
 
-    /* Style Dasar Tombol */
     .btn {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
       width: 100%;
       padding: 16px;
       font-size: 15px;
@@ -74,9 +72,9 @@
       color: #ffffff;
       text-decoration: none;
       border-radius: 14px;
-      transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
       box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
-      border: none;
+      transition: transform 0.15s ease, filter 0.15s ease;
+      text-align: center;
     }
 
     .btn:active {
@@ -84,39 +82,28 @@
       filter: brightness(0.85);
     }
 
-    /* ================= PILIHAN WARNA TOMBOL ================= */
-    
-    /* Gradasi Pink - Merah */
-    .btn-pink {
+    /* Variasi Palet Warna Otomatis */
+    .color-0 {
       background: linear-gradient(135deg, #ec4899, #e11d48);
       box-shadow: 0 4px 15px rgba(225, 29, 72, 0.35);
     }
-
-    /* Gradasi Ungu VIP */
-    .btn-purple {
+    .color-1 {
       background: linear-gradient(135deg, #a855f7, #6b21a8);
       box-shadow: 0 4px 15px rgba(168, 85, 247, 0.35);
     }
-
-    /* Gradasi Neon Cyan / Biru Laut */
-    .btn-cyan {
+    .color-2 {
       background: linear-gradient(135deg, #06b6d4, #0284c7);
       box-shadow: 0 4px 15px rgba(6, 182, 212, 0.35);
     }
-
-    /* Gradasi Emas / Gold */
-    .btn-gold {
+    .color-3 {
       background: linear-gradient(135deg, #f59e0b, #d97706);
       box-shadow: 0 4px 15px rgba(245, 158, 11, 0.35);
     }
-
-    /* Warna Hijau Solid (Online / Success) */
-    .btn-green {
+    .color-4 {
       background: linear-gradient(135deg, #22c55e, #16a34a);
       box-shadow: 0 4px 15px rgba(34, 197, 94, 0.35);
     }
 
-    /* Footer Sederhana */
     .footer {
       margin-top: auto;
       padding-top: 30px;
@@ -132,42 +119,37 @@
   <h1>✦ PILIHAN AKSES VIP ✦</h1>
   <p class="subtitle">Silakan pilih menu layanan di bawah ini:</p>
 
-  <div class="btn-container">
-    <!-- Tombol 1: Gradasi Pink -->
-    <a href="https://t.me/galerinakalwebsite" class="btn btn-pink">
-      🔥 GABUNG CHANNEL VIP
-    </a>
-
-    <!-- Tombol 2: Gradasi Ungu -->
-    <a href="https://t.me/telegalerinakal_bot" class="btn btn-purple">
-      💎 BELI KODE AKSES BOT
-    </a>
-
-    <!-- Tombol 3: Gradasi Cyan -->
-    <a href="https://t.me/amiragalerinakal" class="btn btn-cyan">
-      💬 CHAT ADMIN 1 (ONLINE)
-    </a>
-
-    <!-- Tombol 4: Gradasi Emas / Gold -->
-    <a href="https://t.me/officialgalerinakal" class="btn btn-gold">
-      ⚡ CHAT ADMIN 2 (ONLINE)
-    </a>
-
-    <!-- Tombol 5: Hijau Solid -->
-    <a href="https://t.me/galerinakalwebsite" class="btn btn-green">
-      🟢 TESTIMONI & BUKTI
-    </a>
-  </div>
+  <div class="btn-container" id="menu-list"></div>
 
   <div class="footer">
     © 2026 Portal Layanan Resmi. All rights reserved.
   </div>
 
   <script>
-    // Memastikan SDK Telegram aktif dan jendela popup dibuka penuh
     if (window.Telegram && window.Telegram.WebApp) {
       window.Telegram.WebApp.ready();
       window.Telegram.WebApp.expand();
+    }
+
+    // Membaca data item dari hash URL yang dikirim bot secara dinamis
+    const rawData = window.location.hash.substring(1);
+    const container = document.getElementById("menu-list");
+
+    if (rawData) {
+      try {
+        const items = JSON.parse(decodeURIComponent(rawData));
+        items.forEach((item, index) => {
+          const a = document.createElement("a");
+          a.href = item.url;
+          a.innerText = item.text;
+          a.className = `btn color-${index % 5}`;
+          container.appendChild(a);
+        });
+      } catch (err) {
+        container.innerHTML = "<p style='color:#ef4444; font-size:13px;'>Gagal memuat tombol konfigurasi.</p>";
+      }
+    } else {
+      container.innerHTML = "<p style='color:#94a3b8; font-size:13px;'>Belum ada link yang diatur.</p>";
     }
   </script>
 </body>
