@@ -3,28 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Portal VIP</title>
-  <!-- Telegram WebApp SDK -->
+  <title>Portal Web</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      -webkit-tap-highlight-color: transparent;
-    }
-
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     body {
       background-color: #0b0f19;
       color: #ffffff;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
       padding: 28px 16px;
       min-height: 100vh;
     }
-
     .badge {
       background: rgba(255, 255, 255, 0.08);
       border: 1px solid rgba(255, 255, 255, 0.15);
@@ -37,93 +29,33 @@
       color: #38bdf8;
       font-weight: 600;
     }
-
-    h1 {
-      font-size: 22px;
-      font-weight: 800;
-      letter-spacing: 0.5px;
-      margin-bottom: 6px;
-      text-align: center;
-    }
-
-    p.subtitle {
-      font-size: 13px;
-      color: #94a3b8;
-      margin-bottom: 24px;
-      text-align: center;
-    }
-
-    .btn-container {
-      width: 100%;
-      max-width: 380px;
-      display: flex;
-      flex-direction: column;
-      gap: 13px;
-    }
-
+    h1 { font-size: 22px; font-weight: 800; margin-bottom: 6px; text-align: center; }
+    p.subtitle { font-size: 13px; color: #94a3b8; margin-bottom: 24px; text-align: center; }
+    .btn-container { width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 13px; }
     .btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      padding: 16px;
-      font-size: 15px;
-      font-weight: 700;
-      color: #ffffff;
-      text-decoration: none;
-      border-radius: 14px;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
-      transition: transform 0.15s ease, filter 0.15s ease;
-      text-align: center;
+      display: flex; align-items: center; justify-content: center;
+      width: 100%; padding: 16px; font-size: 15px; font-weight: 700;
+      color: #ffffff; text-decoration: none; border-radius: 14px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.35); transition: transform 0.15s ease;
     }
-
-    .btn:active {
-      transform: scale(0.97);
-      filter: brightness(0.85);
-    }
-
-    /* Variasi Palet Warna Otomatis */
-    .color-0 {
-      background: linear-gradient(135deg, #ec4899, #e11d48);
-      box-shadow: 0 4px 15px rgba(225, 29, 72, 0.35);
-    }
-    .color-1 {
-      background: linear-gradient(135deg, #a855f7, #6b21a8);
-      box-shadow: 0 4px 15px rgba(168, 85, 247, 0.35);
-    }
-    .color-2 {
-      background: linear-gradient(135deg, #06b6d4, #0284c7);
-      box-shadow: 0 4px 15px rgba(6, 182, 212, 0.35);
-    }
-    .color-3 {
-      background: linear-gradient(135deg, #f59e0b, #d97706);
-      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.35);
-    }
-    .color-4 {
-      background: linear-gradient(135deg, #22c55e, #16a34a);
-      box-shadow: 0 4px 15px rgba(34, 197, 94, 0.35);
-    }
-
-    .footer {
-      margin-top: auto;
-      padding-top: 30px;
-      font-size: 11px;
-      color: #64748b;
-      text-align: center;
-    }
+    .btn:active { transform: scale(0.97); filter: brightness(0.85); }
+    .color-0 { background: linear-gradient(135deg, #ec4899, #e11d48); }
+    .color-1 { background: linear-gradient(135deg, #a855f7, #6b21a8); }
+    .color-2 { background: linear-gradient(135deg, #06b6d4, #0284c7); }
+    .color-3 { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .color-4 { background: linear-gradient(135deg, #22c55e, #16a34a); }
+    .footer { margin-top: auto; padding-top: 30px; font-size: 11px; color: #64748b; }
   </style>
 </head>
 <body>
 
-  <div class="badge">OFFICIAL PORTAL</div>
-  <h1>✦ PILIHAN AKSES VIP ✦</h1>
-  <p class="subtitle">Silakan pilih menu layanan di bawah ini:</p>
+  <div class="badge" id="app-badge">OFFICIAL PORTAL</div>
+  <h1 id="app-title">✦ PILIHAN AKSES VIP ✦</h1>
+  <p class="subtitle" id="app-subtitle">Silakan pilih menu layanan di bawah ini:</p>
 
   <div class="btn-container" id="menu-list"></div>
 
-  <div class="footer">
-    © 2026 Portal Layanan Resmi. All rights reserved.
-  </div>
+  <div class="footer">© 2026 Portal Layanan Resmi.</div>
 
   <script>
     if (window.Telegram && window.Telegram.WebApp) {
@@ -131,13 +63,20 @@
       window.Telegram.WebApp.expand();
     }
 
-    // Membaca data item dari hash URL yang dikirim bot secara dinamis
     const rawData = window.location.hash.substring(1);
     const container = document.getElementById("menu-list");
 
     if (rawData) {
       try {
-        const items = JSON.parse(decodeURIComponent(rawData));
+        const payload = JSON.parse(decodeURIComponent(rawData));
+        
+        // Cek apakah ada data judul kustom
+        if (payload.title) document.getElementById("app-title").innerText = payload.title;
+        if (payload.subtitle) document.getElementById("app-subtitle").innerText = payload.subtitle;
+        if (payload.badge) document.getElementById("app-badge").innerText = payload.badge;
+
+        // Render tombol
+        const items = payload.items || payload;
         items.forEach((item, index) => {
           const a = document.createElement("a");
           a.href = item.url;
@@ -146,10 +85,8 @@
           container.appendChild(a);
         });
       } catch (err) {
-        container.innerHTML = "<p style='color:#ef4444; font-size:13px;'>Gagal memuat tombol konfigurasi.</p>";
+        container.innerHTML = "<p style='color:#ef4444; font-size:13px;'>Gagal memuat konfigurasi.</p>";
       }
-    } else {
-      container.innerHTML = "<p style='color:#94a3b8; font-size:13px;'>Belum ada link yang diatur.</p>";
     }
   </script>
 </body>
