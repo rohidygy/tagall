@@ -1,181 +1,122 @@
+import json
+import os
+import logging
 from pyrogram import Client, filters
-from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
+from pyrogram.errors import FloodWait, MessageNotModified
+import asyncio
 
-from config import API_HASH, API_ID, TOKEN
+# ================= KONFIGURASI BOT =================
+API_ID = 1634450          # Ganti dengan API ID kamu
+API_HASH = "1a42e816cae8d86e71a4c466bba19b8c" # Ganti dengan API Hash kamu
+BOT_TOKEN = "8862325911:AAFZxAdv0K9jTaBQYillPQCbZdYQu-V67-Q"
+OWNER_ID = 1492743978      # Ganti dengan User ID Telegram kamu (cek via @userinfobot)
 
-app = Client("LuciferVIP", api_id=API_ID, api_hash=API_HASH, bot_token=TOKEN)
+DATA_FILE = "buttons_data.json"
 
-TEXT_START = """<blockquote expandable>
- Hai {} 👋 Selamat datang di bot {}🎉
+# Inisialisasi file konfigurasi jika belum ada
+if not os.path.exists(DATA_FILE):
+    default_data = [
+        {"text": "🌐 Kunjungi Web", "url": "https://google.com"},
+        {"text": "💬 Hubungi Admin", "url": "https://t.me/durov"}
+    ]
+    with open(DATA_FILE, "w", encoding="utf-8") as f:
+        json.dump(default_data, f, indent=4)
 
-Bot ini dibuat khusus untuk memudahkan kamu bergabung ke website kami yang berisi:
+def load_buttons() -> InlineKeyboardMarkup:
+    """Membaca daftar tombol dari file JSON dan mengubahnya ke markup."""
+    try:
+        with open(DATA_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        
+        keyboard = []
+        for item in data:
+            keyboard.append([InlineKeyboardButton(item["text"], url=item["url"])])
+        return InlineKeyboardMarkup(keyboard)
+    except Exception as e:
+        logging.error(f"Gagal memuat tombol: {e}")
+        return None
 
-📱 Ribuan koleksi video rare exclusive berkualitas
-🔥 Update video terbaru setiap hari
-⚡️ Akses cepat dan mudah
-💥 Nonton Puas Tanpa Iklan
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
-Silakan gunakan tombol di bawah untuk mengakses website kami! 🚀
-</blockquote>"""
-
-IMG_URL = "https://files.catbox.moe/tdeh91.jpg"
+app = Client("channel_button_manager", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
 
-@app.on_message(filters.command("start"))
-async def start_handler(client, message):
-    return await message.reply_photo(
-        IMG_URL,
-        caption=TEXT_START.format(message.from_user.mention, client.me.mention),
-        reply_markup=InlineKeyboardMarkup(
-            [
-                [InlineKeyboardButton("ᴄʜᴀɴɴᴇʟ", url="t.me/galerinakalwebsite")],
-                [
-                    InlineKeyboardButton("ᴀᴅᴍɪɴ 1", url="t.me/amiragalerinakal"),
-                    InlineKeyboardButton("ᴀᴅᴍɪɴ 2", url="t.me/officialgalerinakal"),
-                ],
-                [
-                    InlineKeyboardButton("ᴋᴏᴅᴇ ᴀᴋsᴇs 5ʜ", callback_data="payment24"),
-                    InlineKeyboardButton("ᴋᴏᴅᴇ ᴀᴋsᴇs 10ʜ", callback_data="payment12"),
-                ],
-                [
-                    InlineKeyboardButton("ᴋᴏᴅᴇ ᴀᴋsᴇs 14ʜ", callback_data="payment6"),
-                    InlineKeyboardButton("ᴛᴀʟᴇɴᴛ ᴠᴄs ɢɴ", callback_data="payment3"),
-                ],
-            ]
-        ),
+# ================= ATUR BUTTON LEWAT BOT =================
+@app.on_message(filters.command("setbutton") & filters.private & filters.user(OWNER_ID))
+async def set_buttons_handler(client: Client, message: Message):
+    """
+    Format penggunaan:
+    /setbutton
+    Nama Tombol 1 - https://link1.com
+    Nama Tombol 2 - https://link2.com
+    """
+    lines = message.text.split("\n")[1:]
+    
+    if not lines:
+        return await message.reply_text(
+            "⚠️ **Format salah!**\n\n"
+            "Kirim perintah seperti contoh berikut:\n"
+            "`/setbutton\n"
+            "🌐 Website Kami - https://contoh.com\n"
+            "💬 Hubungi Admin - https://t.me/username_kamu`"
+        )
+    
+    new_buttons = []
+    for line in lines:
+        if " - " in line:
+            parts = line.split(" - ", 1)
+            btn_text = parts[0].strip()
+            btn_url = parts[1].strip()
+            
+            if not btn_url.startswith("http"):
+                btn_url = "https://" + btn_url
+                
+            new_buttons.append({"text": btn_text, "url": btn_url})
+    
+    if not new_buttons:
+        return await message.reply_text("❌ Tidak ada tombol yang valid terbaca. Pastikan ada pemisah ` - `.")
+
+    with open(DATA_FILE, "w", encoding="utf-8") as f:
+        json.dump(new_buttons, f, indent=4)
+
+    preview_markup = load_buttons()
+    await message.reply_text(
+        "✅ **Tombol berhasil diperbarui!**\nBerikut preview tombol barunya:",
+        reply_markup=preview_markup
     )
 
 
-@app.on_callback_query(filters.regex("payment24"))
-async def payment24_callback(client, callback_query):
-    text = (
-        "💎 **KODE AKSES 5 HARI**\n\n"
-        "💵 **Harga:** `Rp 25.000`\n\n"
-        "💳 **Silahkan lakukan pembayaran melalui akses berikut:**\n\n"
-        "🏧 **BCA:** `8520330721` A/n M STEAPHEN\n"
-        "🏧 **BRI:** `011201106024509` A/n NICHOLAS\n"
-        "🏧 **BNI:** `188-652-0309` A/n YOSE RIZAL\n\n"
-    )
-    return await callback_query.message.edit(
-        text,
-        reply_markup=InlineKeyboardMarkup(
-            [
-                [
-                    InlineKeyboardButton(
-                        "ᴋᴏɴғɪʀᴍᴀsɪ ᴘᴇᴍʙᴀʏᴀʀᴀɴ", url="t.me/telegalerinakal_bot"
-                    )
-                ],
-                [InlineKeyboardButton("Kembali", callback_data="back_to_menu")],
-            ]
-        ),
-    )
+@app.on_message(filters.command("cekbutton") & filters.private & filters.user(OWNER_ID))
+async def check_buttons_handler(client: Client, message: Message):
+    markup = load_buttons()
+    if markup:
+        await message.reply_text("📌 **Tombol yang saat ini aktif:**", reply_markup=markup)
+    else:
+        await message.reply_text("Belum ada tombol tersimpan.")
 
 
-@app.on_callback_query(filters.regex("payment12"))
-async def payment12_callback(client, callback_query):
-    text = (
-        "💎 **KODE AKSES 10 HARI**\n\n"
-        "💵 **Harga:** `Rp 50.000`\n\n"
-        "💳 **Silahkan lakukan pembayaran melalui akses berikut:**\n\n"
-        "🏧 **BCA:** `8520330721` A/n M STEAPHEN\n"
-        "🏧 **BRI:** `011201106024509` A/n NICHOLAS\n"
-        "🏧 **BNI:** `188-652-0309` A/n YOSE RIZAL\n\n"
-    )
-    return await callback_query.message.edit(
-        text,
-        reply_markup=InlineKeyboardMarkup(
-            [
-                [
-                    InlineKeyboardButton(
-                        "ᴋᴏɴғɪʀᴍᴀsɪ ᴘᴇᴍʙᴀʏᴀʀᴀɴ", url="t.me/telegalerinakal_bot"
-                    )
-                ],
-                [InlineKeyboardButton("Kembali", callback_data="back_to_menu")],
-            ]
-        ),
-    )
+# ================= AUTO ATTACH BUTTON DI CHANNEL =================
+@app.on_message(filters.channel)
+async def auto_button_channel(client: Client, message: Message):
+    if message.reply_markup:
+        return
 
+    current_markup = load_buttons()
+    if not current_markup:
+        return
 
-@app.on_callback_query(filters.regex("payment6"))
-async def payment6_callback(client, callback_query):
-    text = (
-        "💎 **KODE AKSES 14 HARI**\n\n"
-        "💵 **Harga:** `Rp 100.000`\n\n"
-        "💳 **Silahkan lakukan pembayaran melalui akses berikut:**\n\n"
-        "🏧 **BCA:** `8520330721` A/n M STEAPHEN\n"
-        "🏧 **BRI:** `011201106024509` A/n NICHOLAS\n"
-        "🏧 **BNI:** `188-652-0309` A/n YOSE RIZAL\n\n"
-    )
-    return await callback_query.message.edit(
-        text,
-        reply_markup=InlineKeyboardMarkup(
-            [
-                [
-                    InlineKeyboardButton(
-                        "ᴋᴏɴғɪʀᴍᴀsɪ ᴘᴇᴍʙᴀʏᴀʀᴀɴ", url="t.me/telegalerinakal_bot"
-                    )
-                ],
-                [InlineKeyboardButton("Kembali", callback_data="back_to_menu")],
-            ]
-        ),
-    )
+    try:
+        await message.edit_reply_markup(reply_markup=current_markup)
+        logging.info(f"Tombol dipasang ke postingan ID {message.id}")
+    except FloodWait as e:
+        await asyncio.sleep(e.value)
+        await message.edit_reply_markup(reply_markup=current_markup)
+    except MessageNotModified:
+        pass
+    except Exception as e:
+        logging.error(f"Gagal menambahkan tombol: {e}")
 
-
-@app.on_callback_query(filters.regex("payment3"))
-async def payment3_callback(client, callback_query):
-    text = (
-        "💎 **VCS TALENT GALERI NAKAL**\n\n"
-        "💵 **Harga:** `Rp 100.000`\n\n"
-        "💳 **Silahkan lakukan pembayaran melalui akses berikut:**\n\n"
-        "🏧 **BCA:** `8520330721` A/n M STEAPHEN\n"
-        "🏧 **BRI:** `011201106024509` A/n NICHOLAS\n"
-        "🏧 **BNI:** `188-652-0309` A/n YOSE RIZAL\n\n"
-        "KLIK ADMIN GALERY NAKAL UNTUK TANYA TALENT VCS READY\n"
-    )
-    return await callback_query.message.edit(
-        text,
-        reply_markup=InlineKeyboardMarkup(
-            [
-                [
-                    InlineKeyboardButton(
-                        "ᴋᴏɴғɪʀᴍᴀsɪ ᴘᴇᴍʙᴀʏᴀʀᴀɴ", url="t.me/telegalerinakal_bot"
-                    )
-                ],
-                [
-                    InlineKeyboardButton(
-                        "ᴀᴅᴍɪɴ ɢᴀʟᴇʀʏ ɴᴀᴋᴀʟ", url="t.me/amiragalerinakal"
-                    )
-                ],
-                [InlineKeyboardButton("Kembali", callback_data="back_to_menu")],
-            ]
-        ),
-    )
-
-
-@app.on_callback_query(filters.regex("back_to_menu"))
-async def back_to_menu(client, callback_query):
-    return await callback_query.message.edit(
-        TEXT_START.format(callback_query.message.from_user.mention, client.me.mention),
-        disable_web_page_preview=True,
-        reply_markup=InlineKeyboardMarkup(
-            [
-                [InlineKeyboardButton("ᴄʜᴀɴɴᴇʟ", url="t.me/galerinakalwebsite")],
-                [
-                    InlineKeyboardButton("ᴀᴅᴍɪɴ 1", url="t.me/amiragalerinakal"),
-                    InlineKeyboardButton("ᴀᴅᴍɪɴ 2", url="t.me/officialgalerinakal"),
-                ],
-                [
-                    InlineKeyboardButton("ᴋᴏᴅᴇ ᴀᴋsᴇs 5ʜ", callback_data="payment24"),
-                    InlineKeyboardButton("ᴋᴏᴅᴇ ᴀᴋsᴇs 10ʜ", callback_data="payment12"),
-                ],
-                [
-                    InlineKeyboardButton("ᴋᴏᴅᴇ ᴀᴋsᴇs 14ʜ", callback_data="payment6"),
-                    InlineKeyboardButton("ᴛᴀʟᴇɴᴛ ᴠᴄs ɢɴ", callback_data="payment3"),
-                ],
-            ]
-        ),
-    )
-
-
-print("BOT AKTIF KONTOL")
-app.run()
+if __name__ == "__main__":
+    print("Bot Pengatur Tombol Channel Aktif...")
+    app.run()
