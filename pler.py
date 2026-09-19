@@ -24,10 +24,7 @@ logging.basicConfig(
 )
 
 app = Client(
-    "channel_button_manager",
-    api_id=API_ID,
-    api_hash=API_HASH,
-    bot_token=BOT_TOKEN
+    "channel_button_manager", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN
 )
 
 
@@ -131,7 +128,9 @@ async def set_normal_buttons_handler(client: Client, message: Message):
             button_grid.append(row)
 
     if not button_grid:
-        return await message.reply_text("❌ Tidak ada tombol yang valid. Gunakan pemisah ` - `.")
+        return await message.reply_text(
+            "❌ Tidak ada tombol yang valid. Gunakan pemisah ` - `."
+        )
 
     data = get_all_data()
     data[channel_id_str] = button_grid
@@ -140,7 +139,7 @@ async def set_normal_buttons_handler(client: Client, message: Message):
     preview = get_channel_markup(int(channel_id_str))
     await message.reply_text(
         f"✅ **Tombol Channel Biasa Disimpan:** `{channel_id_str}`\n\nPratinjau:",
-        reply_markup=preview
+        reply_markup=preview,
     )
 
 
@@ -180,9 +179,7 @@ async def set_webapp_buttons_handler(client: Client, message: Message):
     final_webapp_link = f"{BASE_WEBAPP_URL}#{encoded_json}"
 
     # Tombol pembuka WebApp yang menempel di postingan channel
-    button_structure = [
-        [{"text": "✨ ʙᴜᴋᴀ ᴍᴇɴᴜ ᴠɪᴘ ✨", "url": final_webapp_link}]
-    ]
+    button_structure = [[{"text": "✨ ʙᴜᴋᴀ ᴍᴇɴᴜ ᴠɪᴘ ✨", "url": final_webapp_link}]]
 
     data = get_all_data()
     data[channel_id_str] = button_structure
@@ -191,7 +188,7 @@ async def set_webapp_buttons_handler(client: Client, message: Message):
     preview = get_channel_markup(int(channel_id_str))
     await message.reply_text(
         f"✅ **Menu WebApp Warna Disimpan untuk Channel:** `{channel_id_str}`\n\nPratinjau tombol channel:",
-        reply_markup=preview
+        reply_markup=preview,
     )
 
 
@@ -206,7 +203,9 @@ async def check_buttons_handler(client: Client, message: Message):
     try:
         markup = get_channel_markup(int(ch_id))
         if markup:
-            await message.reply_text(f"📌 **Tombol aktif channel** `{ch_id}`:", reply_markup=markup)
+            await message.reply_text(
+                f"📌 **Tombol aktif channel** `{ch_id}`:", reply_markup=markup
+            )
         else:
             await message.reply_text(f"Belum ada tombol untuk channel `{ch_id}`.")
     except ValueError:
@@ -232,7 +231,9 @@ async def delete_buttons_handler(client: Client, message: Message):
 
 
 # ================= LIST CHANNEL =================
-@app.on_message(filters.private & filters.command("listchannel") & filters.user(OWNER_ID))
+@app.on_message(
+    filters.private & filters.command("listchannel") & filters.user(OWNER_ID)
+)
 async def list_channel_handler(client: Client, message: Message):
     data = get_all_data()
     if not data:
