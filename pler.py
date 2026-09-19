@@ -126,7 +126,7 @@ async def start_handler(client: Client, message: Message):
     if is_owner:
         text += (
             "\n\n**Perintah Khusus Owner:**\n"
-            "• `/update` $\\rightarrow$ `git pull` & otomatis restart\n"
+            "• `/update` $\\rightarrow$ Git pull & otomatis restart\n"
             "• `/restart` $\\rightarrow$ Restart bot langsung dari chat\n"
             "• `/addadmin <USER_ID>` $\\rightarrow$ Tambah hak akses admin\n"
             "• `/deladmin <USER_ID>` $\\rightarrow$ Cabut hak akses admin\n"
@@ -141,7 +141,6 @@ async def start_handler(client: Client, message: Message):
 async def git_pull_handler(client: Client, message: Message):
     msg = await message.reply_text("🔄 **Menjalankan git pull...**")
     try:
-        # Jalankan git pull di direktori bot
         process = subprocess.run(
             ["git", "pull"],
             stdout=subprocess.PIPE,
@@ -150,6 +149,311 @@ async def git_pull_handler(client: Client, message: Message):
             timeout=30
         )
         output = process.stdout or process.stderr
-        
-        await msg.edit_text(
-            f"📦 **Hasil Git Pull:**\n```text\n{output.strip()}\n
+        hasil = output.strip() if output else "Tidak ada perubahan."
+
+        balasan = (
+            "📦 <b>Hasil Git Pull:</b>\n"
+            f"<pre>{hasil}</pre>\n\n"
+            "♻️ <i>Memulai ulang bot...</i>"
+        )
+        await msg.edit_text(balasan)
+        await asyncio.sleep(1.5)
+        os.execl(sys.executable, sys.executable, *sys.argv)
+    except Exception as e:
+        await msg.edit_text(f"❌ <b>Gagal update/restart:</b>\n<code>{e}</code>")
+
+
+@app.on_message(filters.private & filters.command("restart") & filters.user(OWNER_ID))
+async def restart_bot_handler(client: Client, message: Message):
+    await message.reply_text("♻️ **Memulai ulang bot... Tunggu beberapa detik.**")
+    await asyncio.sleep(1)
+    os.execl(sys.executable, sys.executable, *sys.argv)
+
+
+# ================= MANAJEMEN AKSES ADMIN (OWNER ONLY) =================
+@app.on_message(filters.private & filters.command("addadmin") & filters.user(OWNER_ID))
+async def add_admin_handler(client: Client, message: Message):
+    target_id = None
+    if message.reply_to_message and message.reply_to_message.forward_from:
+        target_id = message.reply_to_message.forward_from.id
+    else:
+        parts = message.text.split()
+        if len(parts) >= 2:
+            try:
+                target_id = int(parts[1])
+            except ValueError:
+                return await message.reply_text("⚠️ User ID harus berupa angka.")
+
+    if not target_id:
+        return await message.reply_text("⚠️ Format: `/addadmin <USER_ID>`")
+
+    admins = get_admins()
+    if target_id in admins:
+        return await message.reply_text(f"Pengguna `{target_id}` sudah menjadi admin.")
+
+    admins.append(target_id)
+    save_admins(admins)
+    await message.reply_text(f"✅ User ID `{target_id}` berhasil diberi akses admin.")
+
+
+@app.on_message(filters.private & filters.command("deladmin") & filters.user(OWNER_ID))
+async def del_admin_handler(client: Client, message: Message):
+    parts = message.text.split()
+    if len(parts) < 2:
+        return await message.reply_text("⚠️ Format: `/deladmin <USER_ID>`")
+
+    try:
+        target_id = int(parts[1])
+    except ValueError:
+        return await message.reply_text("⚠️ User ID harus berupa angka.")
+
+    if target_id == OWNER_ID:
+        return await message.reply_text("❌ Owner utama tidak dapat dihapus.")
+
+    admins = get_admins()
+    if target_id not in admins:
+        return await message.reply_text(f"User ID `{target_id}` tidak ada di daftar admin.")
+
+    admins.remove(target_id)
+    save_admins(admins)
+    await message.reply_text(f"🗑️ Akses untuk `{target_id}` berhasil dicabut.")
+
+
+@app.on_message(filters.private & filters.command("listadmin") & filters.user(OWNER_ID))
+async def list_admin_handler(client: Client, message: Message):
+    admins = get_admins()
+    text = "👥 **Daftar Admin Bot:**\n\n"
+    for uid in admins:
+        if uid == OWNER_ID:
+            text += f"• `{uid}` 👑 *(Owner)*\n"
+        else:
+            text += f"• `{uid}` 🛠 *(Admin)*\n"
+    await message.reply_text(text)
+
+
+# ================= DETEKSI ID FORWARD =================
+@app.on_message(filters.private & filters.forwarded & is_bot_admin)
+async def detect_forward(client: Client, message: Message):
+    if message.forward_from_chat and message.forward_from_chat.type.name == "CHANNEL":
+        ch = message.forward_from_chat
+        await message.reply_text(
+            f"📢 **Channel Terdeteksi:**\n"
+            f"• Nama: **{ch.title}**\n"
+            f"• ID: `{ch.id}`"
+        )
+    elif message.forward_from:
+        u = message.forward_from
+        await message.reply_text(
+            f"👤 **Pengguna Terdeteksi:**\n"
+            f"• Nama: **{u.first_name}**\n"
+            f"• ID: `{u.id}`"
+        )
+
+
+# ================= ATUR TOMBOL BIASA (/setbutton) =================
+@app.on_message(filters.private & filters.command("setbutton") & is_bot_admin)
+async def set_normal_buttons_handler(client: Client, message: Message):
+    lines = [line.strip() for line in message.text.splitlines() if line.strip()]
+    first_line_parts = lines[0].split()
+
+    if len(first_line_parts) < 2 or len(lines) < 2:
+        return await message.reply_text(
+            "⚠️ **Format /setbutton:**\n\n"
+            "`/setbutton -100xxxxxxxxxx\n"
+            "🌐 Website - https://contoh.com\n"
+            "💬 Admin 1 - https://t.me/admin1 | 💬 Admin 2 - https://t.me/admin2\n"
+            "⚡ Join VIP - https://t.me/channel`"
+        )
+
+    channel_id_str = first_line_parts[1]
+    btn_lines = lines[1:]
+
+    button_grid = []
+    for line in btn_lines:
+        row = []
+        raw_buttons = line.split("|")
+        for btn in raw_buttons:
+            if " - " in btn:
+                text, url = btn.split(" - ", 1)
+                text = text.strip()
+                url = clean_url(url)
+                if "." in url:
+                    row.append({"text": text, "url": url})
+        if row:
+            button_grid.append(row)
+
+    if not button_grid:
+        return await message.reply_text("❌ Format salah! Pastikan menggunakan pemisah spasi strip spasi: ` - `.")
+
+    data = get_all_data()
+    data[channel_id_str] = button_grid
+    save_all_data(data)
+
+    try:
+        preview = get_channel_markup(int(channel_id_str))
+        await message.reply_text(
+            f"✅ **Tombol Channel Biasa Berhasil Disimpan!**\nChannel: `{channel_id_str}`\n\nPratinjau:",
+            reply_markup=preview
+        )
+    except Exception as e:
+        await message.reply_text(
+            f"⚠️ **Tombol tersimpan, tetapi link ditolak Telegram saat membuat pratinjau:**\n`{e}`\n\n"
+            "Periksa kembali apakah URL yang dimasukkan valid."
+        )
+
+
+# ================= ATUR WEBAPP POP-UP (/setweb) =================
+@app.on_message(filters.private & filters.command("setweb") & is_bot_admin)
+async def set_webapp_buttons_handler(client: Client, message: Message):
+    lines = [line.strip() for line in message.text.splitlines() if line.strip()]
+    first_line = lines[0]
+    parts = first_line.split()
+
+    if len(parts) < 2 or len(lines) < 2:
+        return await message.reply_text(
+            "⚠️ **Format /setweb:**\n\n"
+            "`/setweb -100xxxxxxxxxx [JUDUL | SUBTITLE | BADGE]\n"
+            "🔥 Join VIP - https://t.me/channel\n"
+            "💎 Akses Bot - https://t.me/bot\n"
+            "💬 Admin - https://t.me/admin`"
+        )
+
+    channel_id_str = parts[1]
+
+    custom_title = "✦ PILIHAN AKSES VIP ✦"
+    custom_subtitle = "Silakan pilih menu layanan di bawah ini:"
+    custom_badge = "OFFICIAL PORTAL"
+
+    match = re.search(r"\[(.*?)\]", first_line)
+    if match:
+        header_data = [h.strip() for h in match.group(1).split("|")]
+        if len(header_data) >= 1 and header_data[0]:
+            custom_title = header_data[0]
+        if len(header_data) >= 2 and header_data[1]:
+            custom_subtitle = header_data[1]
+        if len(header_data) >= 3 and header_data[2]:
+            custom_badge = header_data[2]
+
+    btn_lines = lines[1:]
+    webapp_items = []
+    for line in btn_lines:
+        if " - " in line:
+            name, link = line.split(" - ", 1)
+            name = name.strip()
+            link = clean_url(link)
+            if "." in link:
+                webapp_items.append({"text": name, "url": link})
+
+    if not webapp_items:
+        return await message.reply_text("❌ Format salah! Gunakan pemisah ` - `.")
+
+    payload = {
+        "title": custom_title,
+        "subtitle": custom_subtitle,
+        "badge": custom_badge,
+        "items": webapp_items
+    }
+
+    encoded_json = urllib.parse.quote(json.dumps(payload))
+    final_webapp_link = f"{BASE_WEBAPP_URL}#{encoded_json}"
+
+    button_structure = [
+        [{"text": "✨ ʙᴜᴋᴀ ᴍᴇɴᴜ ᴠɪᴘ ✨", "url": final_webapp_link}]
+    ]
+
+    data = get_all_data()
+    data[channel_id_str] = button_structure
+    save_all_data(data)
+
+    try:
+        preview = get_channel_markup(int(channel_id_str))
+        await message.reply_text(
+            f"✅ **Tampilan WebApp Berhasil Disimpan!**\n\n"
+            f"• **Badge:** `{custom_badge}`\n"
+            f"• **Judul:** `{custom_title}`\n"
+            f"• **Subjudul:** `{custom_subtitle}`\n"
+            f"• **Channel:** `{channel_id_str}`\n\n"
+            "Pratinjau tombol channel:",
+            reply_markup=preview
+        )
+    except Exception as e:
+        await message.reply_text(f"⚠️ **Error saat pratinjau:** `{e}`")
+
+
+# ================= CEK TOMBOL =================
+@app.on_message(filters.private & filters.command("cekbutton") & is_bot_admin)
+async def check_buttons_handler(client: Client, message: Message):
+    args = message.text.split()
+    if len(args) < 2:
+        return await message.reply_text("Ketik: `/cekbutton <ID_CHANNEL>`")
+
+    ch_id = args[1]
+    try:
+        markup = get_channel_markup(int(ch_id))
+        if markup:
+            await message.reply_text(f"📌 **Tombol aktif channel** `{ch_id}`:", reply_markup=markup)
+        else:
+            await message.reply_text(f"Belum ada tombol untuk channel `{ch_id}`.")
+    except ValueError:
+        await message.reply_text("ID Channel harus berupa angka.")
+
+
+# ================= HAPUS TOMBOL =================
+@app.on_message(filters.private & filters.command("delbutton") & is_bot_admin)
+async def delete_buttons_handler(client: Client, message: Message):
+    args = message.text.split()
+    if len(args) < 2:
+        return await message.reply_text("Ketik: `/delbutton <ID_CHANNEL>`")
+
+    ch_id = args[1]
+    data = get_all_data()
+
+    if ch_id in data:
+        del data[ch_id]
+        save_all_data(data)
+        await message.reply_text(f"🗑️ Tombol channel `{ch_id}` berhasil dihapus.")
+    else:
+        await message.reply_text(f"Channel `{ch_id}` tidak ditemukan.")
+
+
+# ================= DAFTAR CHANNEL =================
+@app.on_message(filters.private & filters.command("listchannel") & is_bot_admin)
+async def list_channel_handler(client: Client, message: Message):
+    data = get_all_data()
+    if not data:
+        return await message.reply_text("Belum ada channel terdaftar.")
+
+    text = "📋 **Channel dengan Tombol Aktif:**\n\n"
+    for ch_id in data.keys():
+        text += f"• `{ch_id}`\n"
+    await message.reply_text(text)
+
+
+# ================= AUTO ATTACH CHANNEL =================
+@app.on_message(filters.channel)
+async def auto_button_channel(client: Client, message: Message):
+    logging.info(f"Pesan baru masuk di channel ID: {message.chat.id} (Pesan ID: {message.id})")
+
+    if message.reply_markup:
+        return
+
+    markup = get_channel_markup(message.chat.id)
+    if not markup:
+        logging.warning(f"ID Channel {message.chat.id} tidak ditemukan di database tombol!")
+        return
+
+    try:
+        await message.edit_reply_markup(reply_markup=markup)
+        logging.info(f"✅ Berhasil pasang tombol di channel {message.chat.id}")
+    except FloodWait as e:
+        await asyncio.sleep(e.value)
+        await message.edit_reply_markup(reply_markup=markup)
+    except MessageNotModified:
+        pass
+    except Exception as e:
+        logging.error(f"❌ Gagal edit markup di channel {message.chat.id}: {e}")
+
+
+if __name__ == "__main__":
+    print("Bot Pengatur Tombol Aktif...")
+    app.run()
