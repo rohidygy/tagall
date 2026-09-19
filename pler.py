@@ -68,7 +68,9 @@ def get_channel_markup(chat_id: int) -> InlineKeyboardMarkup:
 @app.on_message(filters.command("start") & filters.private)
 async def start_handler(client: Client, message: Message):
     if message.from_user.id != OWNER_ID:
-        return await message.reply_text("👋 Bot ini aktif untuk mengelola tombol channel.")
+        return await message.reply_text(
+            "👋 Bot ini aktif untuk mengelola tombol channel."
+        )
 
     text = (
         f"Halo **{message.from_user.first_name}**! 👋\n\n"
@@ -131,16 +133,16 @@ async def set_buttons_handler(client: Client, message: Message):
             webapp_items.append({"text": btn_text.strip(), "url": btn_url})
 
     if not webapp_items:
-        return await message.reply_text("❌ Tidak ada tombol yang valid. Gunakan pemisah ` - `.")
+        return await message.reply_text(
+            "❌ Tidak ada tombol yang valid. Gunakan pemisah ` - `."
+        )
 
     # Encode list tombol menjadi hash URL untuk dibaca GitHub Pages
     encoded_json = urllib.parse.quote(json.dumps(webapp_items))
     final_webapp_link = f"{BASE_WEBAPP_URL}#{encoded_json}"
 
     # Tombol utama yang menempel di postingan channel
-    button_structure = [
-        [{"text": "✨ ʙᴜᴋᴀ ᴍᴇɴᴜ ᴠɪᴘ ✨", "url": final_webapp_link}]
-    ]
+    button_structure = [[{"text": "✨ ʙᴜᴋᴀ ᴍᴇɴᴜ ᴠɪᴘ ✨", "url": final_webapp_link}]]
 
     data = get_all_data()
     data[channel_id_str] = button_structure
@@ -164,9 +166,13 @@ async def check_buttons_handler(client: Client, message: Message):
     try:
         markup = get_channel_markup(int(ch_id))
         if markup:
-            await message.reply_text(f"📌 **Tombol aktif channel** `{ch_id}`:", reply_markup=markup)
+            await message.reply_text(
+                f"📌 **Tombol aktif channel** `{ch_id}`:", reply_markup=markup
+            )
         else:
-            await message.reply_text(f"Belum ada tombol tersimpan untuk channel `{ch_id}`.")
+            await message.reply_text(
+                f"Belum ada tombol tersimpan untuk channel `{ch_id}`."
+            )
     except ValueError:
         await message.reply_text("ID Channel harus berupa angka.")
 
@@ -186,11 +192,15 @@ async def delete_buttons_handler(client: Client, message: Message):
         save_all_data(data)
         await message.reply_text(f"🗑️ Tombol untuk channel `{ch_id}` berhasil dihapus.")
     else:
-        await message.reply_text(f"Channel `{ch_id}` tidak memiliki konfigurasi tombol.")
+        await message.reply_text(
+            f"Channel `{ch_id}` tidak memiliki konfigurasi tombol."
+        )
 
 
 # ================= DAFTAR CHANNEL =================
-@app.on_message(filters.command("listchannel") & filters.private & filters.user(OWNER_ID))
+@app.on_message(
+    filters.command("listchannel") & filters.private & filters.user(OWNER_ID)
+)
 async def list_channel_handler(client: Client, message: Message):
     data = get_all_data()
     if not data:
@@ -214,7 +224,9 @@ async def auto_button_channel(client: Client, message: Message):
 
     try:
         await message.edit_reply_markup(reply_markup=current_markup)
-        logging.info(f"Tombol dipasang di channel {message.chat.id} (Pesan ID: {message.id})")
+        logging.info(
+            f"Tombol dipasang di channel {message.chat.id} (Pesan ID: {message.id})"
+        )
     except FloodWait as e:
         await asyncio.sleep(e.value)
         await message.edit_reply_markup(reply_markup=current_markup)
