@@ -168,8 +168,8 @@ async def set_webapp_buttons_handler(client: Client, message: Message):
     channel_id_str = parts[1]
 
     # Nilai default judul antarmuka WebApp
-    custom_title = "✦ PILIHAN AKSES VIP ✦"
-    custom_subtitle = "Silakan pilih menu layanan di bawah ini:"
+    custom_title = "✦ SLOT GACOR TAHUN INI ✦"
+    custom_subtitle = "Silakan pilih link dibawah ini:"
     custom_badge = "OFFICIAL PORTAL"
 
     # Mengekstrak format [Judul | Subtitle | Badge] jika ditulis
