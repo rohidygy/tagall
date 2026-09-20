@@ -43,7 +43,9 @@ _load_env_file(os.path.join(BASE_DIR, ".env"))
 def _require_env(name: str) -> str:
     value = os.environ.get(name)
     if not value:
-        sys.exit(f"❌ Variabel {name} belum diisi (environment variable atau file .env).")
+        sys.exit(
+            f"❌ Variabel {name} belum diisi (environment variable atau file .env)."
+        )
     return value
 
 
@@ -199,9 +201,12 @@ def webapp_grid(payload: dict) -> list:
     return [[{"text": WEBAPP_BUTTON_TEXT, "url": build_webapp_link(payload)}]]
 
 
-async def save_after_preview(message: Message, chat_key: str, grid: list, text: str) -> bool:
+async def save_after_preview(
+    message: Message, chat_key: str, grid: list, text: str
+) -> bool:
     """Kirim pratinjau dulu; hanya simpan kalau Telegram menerima tombolnya.
-    (Sebelumnya tombol yang ditolak Telegram tetap tersimpan dan merusak auto-attach.)"""
+    (Sebelumnya tombol yang ditolak Telegram tetap tersimpan dan merusak auto-attach.)
+    """
     try:
         await message.reply_text(text, reply_markup=build_markup(grid))
     except Exception as e:
@@ -275,7 +280,9 @@ async def upload_image(file_path: str) -> Tuple[str, bool]:
 
     errors = []
     timeout = aiohttp.ClientTimeout(total=60)
-    async with aiohttp.ClientSession(headers=UPLOAD_HEADERS, timeout=timeout) as session:
+    async with aiohttp.ClientSession(
+        headers=UPLOAD_HEADERS, timeout=timeout
+    ) as session:
         for name, func, temporary in providers:
             try:
                 return await func(session, content, filename), temporary
@@ -373,7 +380,9 @@ async def set_image_handler(client: Client, message: Message):
             "• Balas (reply) foto dengan <code>/setimg</code>."
         )
 
-    status_msg = await message.reply_text("⏳ <i>Sedang memproses dan mengunggah gambar...</i>")
+    status_msg = await message.reply_text(
+        "⏳ <i>Sedang memproses dan mengunggah gambar...</i>"
+    )
     try:
         direct_url, temporary = await upload_message_image(image_msg)
         text = (
@@ -407,7 +416,9 @@ async def set_photo_handler(client: Client, message: Message):
 
     chat_key = parse_channel_id(parts[1])
     if chat_key is None:
-        return await message.reply_text("❌ ID channel harus berupa angka, contoh: <code>-1001234567890</code>")
+        return await message.reply_text(
+            "❌ ID channel harus berupa angka, contoh: <code>-1001234567890</code>"
+        )
 
     payload = payload_from_grid(get_all_data().get(chat_key))
     if payload is None:
@@ -420,7 +431,9 @@ async def set_photo_handler(client: Client, message: Message):
     try:
         bg_url, temporary = await upload_message_image(image_msg)
     except Exception as e:
-        return await status_msg.edit_text(f"❌ Foto gagal diunggah: <code>{esc(e)}</code>")
+        return await status_msg.edit_text(
+            f"❌ Foto gagal diunggah: <code>{esc(e)}</code>"
+        )
     await status_msg.delete()
 
     payload["background"] = bg_url
@@ -439,7 +452,9 @@ async def set_photo_handler(client: Client, message: Message):
 async def delete_photo_handler(client: Client, message: Message):
     parts = command_text(message).split()
     if len(parts) < 2:
-        return await message.reply_text("Ketik: <code>/delfoto &lt;ID_CHANNEL&gt;</code>")
+        return await message.reply_text(
+            "Ketik: <code>/delfoto &lt;ID_CHANNEL&gt;</code>"
+        )
 
     chat_key = parse_channel_id(parts[1])
     if chat_key is None:
@@ -447,7 +462,9 @@ async def delete_photo_handler(client: Client, message: Message):
 
     payload = payload_from_grid(get_all_data().get(chat_key))
     if payload is None:
-        return await message.reply_text(f"❌ Channel <code>{chat_key}</code> belum punya tampilan WebApp.")
+        return await message.reply_text(
+            f"❌ Channel <code>{chat_key}</code> belum punya tampilan WebApp."
+        )
 
     payload["background"] = ""
     await save_after_preview(
@@ -481,7 +498,9 @@ async def git_pull_handler(client: Client, message: Message):
             proc.kill()
             return await msg.edit_text("❌ <b>git pull timeout (30 detik).</b>")
 
-        output = (stdout.decode(errors="replace") + stderr.decode(errors="replace")).strip()
+        output = (
+            stdout.decode(errors="replace") + stderr.decode(errors="replace")
+        ).strip()
         hasil = esc(output[-3000:]) if output else "Tidak ada perubahan."
 
         if proc.returncode != 0:
@@ -512,7 +531,9 @@ def get_forward_info(message: Message):
     origin = getattr(message, "forward_origin", None)
     if origin is not None:
         return getattr(origin, "chat", None), getattr(origin, "sender_user", None)
-    return getattr(message, "forward_from_chat", None), getattr(message, "forward_from", None)
+    return getattr(message, "forward_from_chat", None), getattr(
+        message, "forward_from", None
+    )
 
 
 @app.on_message(filters.private & filters.command("addadmin") & filters.user(OWNER_ID))
@@ -532,22 +553,30 @@ async def add_admin_handler(client: Client, message: Message):
                 return await message.reply_text("⚠️ User ID harus berupa angka.")
 
     if not target_id:
-        return await message.reply_text("⚠️ Format: <code>/addadmin &lt;USER_ID&gt;</code>")
+        return await message.reply_text(
+            "⚠️ Format: <code>/addadmin &lt;USER_ID&gt;</code>"
+        )
 
     admins = get_admins()
     if target_id in admins:
-        return await message.reply_text(f"Pengguna <code>{target_id}</code> sudah menjadi admin.")
+        return await message.reply_text(
+            f"Pengguna <code>{target_id}</code> sudah menjadi admin."
+        )
 
     admins.append(target_id)
     save_admins(admins)
-    await message.reply_text(f"✅ User ID <code>{target_id}</code> berhasil diberi akses admin.")
+    await message.reply_text(
+        f"✅ User ID <code>{target_id}</code> berhasil diberi akses admin."
+    )
 
 
 @app.on_message(filters.private & filters.command("deladmin") & filters.user(OWNER_ID))
 async def del_admin_handler(client: Client, message: Message):
     parts = message.text.split()
     if len(parts) < 2:
-        return await message.reply_text("⚠️ Format: <code>/deladmin &lt;USER_ID&gt;</code>")
+        return await message.reply_text(
+            "⚠️ Format: <code>/deladmin &lt;USER_ID&gt;</code>"
+        )
 
     try:
         target_id = int(parts[1])
@@ -565,7 +594,9 @@ async def del_admin_handler(client: Client, message: Message):
 
     admins.remove(target_id)
     save_admins(admins)
-    await message.reply_text(f"🗑️ Akses untuk <code>{target_id}</code> berhasil dicabut.")
+    await message.reply_text(
+        f"🗑️ Akses untuk <code>{target_id}</code> berhasil dicabut."
+    )
 
 
 @app.on_message(filters.private & filters.command("listadmin") & filters.user(OWNER_ID))
@@ -601,7 +632,9 @@ async def detect_forward(client: Client, message: Message):
 # ================= ATUR TOMBOL BIASA (/setbutton) =================
 @app.on_message(filters.private & filters.command("setbutton") & is_bot_admin)
 async def set_normal_buttons_handler(client: Client, message: Message):
-    lines = [line.strip() for line in command_text(message).splitlines() if line.strip()]
+    lines = [
+        line.strip() for line in command_text(message).splitlines() if line.strip()
+    ]
     first_line_parts = lines[0].split() if lines else []
 
     if len(first_line_parts) < 2 or len(lines) < 2:
@@ -648,7 +681,9 @@ async def set_normal_buttons_handler(client: Client, message: Message):
 # ================= ATUR WEBAPP POP-UP (/setweb) =================
 @app.on_message(filters.private & filters.command("setweb") & is_bot_admin)
 async def set_webapp_buttons_handler(client: Client, message: Message):
-    lines = [line.strip() for line in command_text(message).splitlines() if line.strip()]
+    lines = [
+        line.strip() for line in command_text(message).splitlines() if line.strip()
+    ]
     first_line = lines[0] if lines else ""
     parts = first_line.split()
 
@@ -698,7 +733,9 @@ async def set_webapp_buttons_handler(client: Client, message: Message):
                 webapp_items.append({"text": name, "url": link})
 
     if not webapp_items:
-        return await message.reply_text("❌ Format salah! Gunakan pemisah <code> - </code>.")
+        return await message.reply_text(
+            "❌ Format salah! Gunakan pemisah <code> - </code>."
+        )
 
     # Foto yang dikirim/di-reply MENGGANTIKAN URL background manual.
     temporary = False
@@ -742,7 +779,9 @@ async def set_webapp_buttons_handler(client: Client, message: Message):
 async def check_buttons_handler(client: Client, message: Message):
     args = message.text.split()
     if len(args) < 2:
-        return await message.reply_text("Ketik: <code>/cekbutton &lt;ID_CHANNEL&gt;</code>")
+        return await message.reply_text(
+            "Ketik: <code>/cekbutton &lt;ID_CHANNEL&gt;</code>"
+        )
 
     chat_key = parse_channel_id(args[1])
     if chat_key is None:
@@ -750,13 +789,17 @@ async def check_buttons_handler(client: Client, message: Message):
 
     grid = get_all_data().get(chat_key)
     if not grid:
-        return await message.reply_text(f"Belum ada tombol untuk channel <code>{chat_key}</code>.")
+        return await message.reply_text(
+            f"Belum ada tombol untuk channel <code>{chat_key}</code>."
+        )
 
     text = f"📌 <b>Tombol aktif channel</b> <code>{chat_key}</code>:"
     payload = payload_from_grid(grid)
     if payload is not None:
         bg = payload.get("background")
-        text += "\n🖼 Background: " + (f"<code>{esc(bg)}</code>" if bg else "<i>(Bawaan)</i>")
+        text += "\n🖼 Background: " + (
+            f"<code>{esc(bg)}</code>" if bg else "<i>(Bawaan)</i>"
+        )
 
     try:
         await message.reply_text(text, reply_markup=build_markup(grid))
@@ -771,7 +814,9 @@ async def check_buttons_handler(client: Client, message: Message):
 async def delete_buttons_handler(client: Client, message: Message):
     args = message.text.split()
     if len(args) < 2:
-        return await message.reply_text("Ketik: <code>/delbutton &lt;ID_CHANNEL&gt;</code>")
+        return await message.reply_text(
+            "Ketik: <code>/delbutton &lt;ID_CHANNEL&gt;</code>"
+        )
 
     ch_id = parse_channel_id(args[1]) or args[1]
     data = get_all_data()
@@ -779,7 +824,9 @@ async def delete_buttons_handler(client: Client, message: Message):
     if ch_id in data:
         del data[ch_id]
         save_all_data(data)
-        await message.reply_text(f"🗑️ Tombol channel <code>{esc(ch_id)}</code> berhasil dihapus.")
+        await message.reply_text(
+            f"🗑️ Tombol channel <code>{esc(ch_id)}</code> berhasil dihapus."
+        )
     else:
         await message.reply_text(f"Channel <code>{esc(ch_id)}</code> tidak ditemukan.")
 
