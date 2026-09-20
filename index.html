@@ -23,7 +23,7 @@
       position: relative;
     }
 
-    /* Lapisan overlay transparan gelap agar teks tetap jelas terbaca */
+    /* Lapisan gelap transparan agar teks selalu terbaca jelas */
     body::before {
       content: "";
       position: fixed;
@@ -31,7 +31,7 @@
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(11, 15, 25, 0.78);
+      background: rgba(11, 15, 25, 0.75);
       z-index: 0;
       pointer-events: none;
     }
@@ -75,7 +75,7 @@
 <body>
 
   <div class="badge" id="app-badge">OFFICIAL PORTAL</div>
-  <h1 id="app-title">✦ SLOT GACOR TAHUN INI ✦</h1>
+  <h1 id="app-title">✦ PORTAL RESMI ✦</h1>
   <p class="subtitle" id="app-subtitle">Silakan pilih menu layanan di bawah ini:</p>
 
   <div class="btn-container" id="menu-list"></div>
@@ -95,13 +95,28 @@
       try {
         const payload = JSON.parse(decodeURIComponent(rawData));
         
-        // Teks kustom
         if (payload.title) document.getElementById("app-title").innerText = payload.title;
-        if (payload.subtitle) document.getElementById("appKode modul mana yang ingin ditampilkan secara utuh? 
+        if (payload.subtitle) document.getElementById("app-subtitle").innerText = payload.subtitle;
+        if (payload.badge) document.getElementById("app-badge").innerText = payload.badge;
 
-Apakah Anda membutuhkan script lengkap untuk:
-1. **Modul Analisis Trading & Alert** (integrasi RSI, MACD, SMC / alerts),
-2. **Modul Pencatatan Keuangan** (rekap 30 hari & penyimpanan bukti/foto via cached media), atau
-3. Script integrasi lainnya?
+        // Pasang gambar latar belakang jika tersedia
+        if (payload.background && payload.background.trim() !== "") {
+          const cleanBg = payload.background.trim();
+          document.body.style.backgroundImage = "url('" + cleanBg + "')";
+        }
 
-Beri tahu nama modul atau fitur spesifik yang ingin digenerate ulang agar bisa langsung disusun lengkap.
+        const items = payload.items || payload;
+        items.forEach((item, index) => {
+          const a = document.createElement("a");
+          a.href = item.url;
+          a.innerText = item.text;
+          a.className = `btn color-${index % 5}`;
+          container.appendChild(a);
+        });
+      } catch (err) {
+        container.innerHTML = "<p style='color:#ef4444; font-size:13px;'>Gagal memuat konfigurasi.</p>";
+      }
+    }
+  </script>
+</body>
+</html>
