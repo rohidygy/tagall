@@ -7,6 +7,7 @@ import subprocess
 import sys
 import urllib.parse
 
+import aiohttp
 from pyrogram import Client, filters
 from pyrogram.errors import FloodWait, MessageNotModified
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
@@ -81,6 +82,19 @@ def clean_url(raw_url: str) -> str:
     return url
 
 
+async def upload_image_to_catbox(file_path: str) -> str:
+    url = "https://catbox.moe/user/api.php"
+    async with aiohttp.ClientSession() as session:
+        with open(file_path, "rb") as f:
+            data = aiohttp.FormData()
+            data.add_field("reqtype", "fileupload")
+            data.add_field("fileToUpload", f, filename=os.path.basename(file_path))
+            async with session.post(url, data=data) as resp:
+                if resp.status == 200:
+                    return (await resp.text()).strip()
+                raise Exception(f"Upload gagal: status kode {resp.status}")
+
+
 def get_channel_markup(chat_id: int):
     data = get_all_data()
     chat_key = str(chat_id)
@@ -115,25 +129,63 @@ async def start_handler(client: Client, message: Message):
     text = (
         f"Halo **{message.from_user.first_name}**! ({role_text})\n\n"
         "**Perintah Pengaturan Tombol:**\n"
-        "• `/setbutton <ID_CH>` $\\rightarrow$ Tombol link biasa di channel\n"
-        "• `/setweb <ID_CH> [JUDUL | SUBTITLE | BADGE]` $\\rightarrow$ Mini App warna-warni\n"
-        "• `/cekbutton <ID_CH>` $\\rightarrow$ Cek tombol channel\n"
-        "• `/delbutton <ID_CH>` $\\rightarrow$ Hapus tombol channel\n"
-        "• `/listchannel` $\\rightarrow$ Daftar channel aktif\n\n"
+        "• `/setbutton <ID_CH>` → Tombol link biasa di channel\n"
+        "• `/setweb <ID_CH> [JUDUL | SUBTITLE | BADGE | BG_URL]` → Mini App WebApp\n"
+        "• Balas foto dengan `/setimg` → Upload foto jadi link background langsung\n"
+        "• `/cekbutton <ID_CH>` → Cek tombol channel\n"
+        "• `/delbutton <ID_CH>` → Hapus tombol channel\n"
+        "• `/listchannel` → Daftar channel aktif\n\n"
         "💡 *Teruskan (forward) pesan dari channel ke bot untuk mendapatkan ID.*"
     )
 
     if is_owner:
         text += (
             "\n\n**Perintah Khusus Owner:**\n"
-            "• `/update` $\\rightarrow$ Git pull & otomatis restart\n"
-            "• `/restart` $\\rightarrow$ Restart bot langsung dari chat\n"
-            "• `/addadmin <USER_ID>` $\\rightarrow$ Tambah hak akses admin\n"
-            "• `/deladmin <USER_ID>` $\\rightarrow$ Cabut hak akses admin\n"
-            "• `/listadmin` $\\rightarrow$ Daftar semua admin"
+            "• `/update` → Git pull & otomatis restart\n"
+            "• `/restart` → Restart bot langsung dari chat\n"
+            "• `/addadmin <USER_ID>` → Tambah hak akses admin\n"
+            "• `/deladmin <USER_ID>` → Cabut hak akses admin\n"
+            "• `/listadmin` → Daftar semua admin"
         )
 
     await message.reply_text(text)
+
+
+# ================= UPLOAD GAMBAR BACKGROUND (/setimg) =================
+@app.on_message(filters.private & filters.command("setimg") & is_bot_admin)
+async def set_image_handler(client: Client, message: Message):
+    reply = message.reply_to_message
+    if not reply or not (
+        reply.photo
+        or (
+            reply.document
+            and reply.document.mime_type
+            and reply.document.mime_type.startswith("image/")
+        )
+    ):
+        return await message.reply_text(
+            "⚠️ **Cara Penggunaan:**\n"
+            "1. Kirim foto ke chat bot ini.\n"
+            "2. Balas (reply) foto tersebut dengan mengetik `/setimg`."
+        )
+
+    status_msg = await message.reply_text("⏳ *Sedang memproses dan mengunggah gambar...*")
+    file_path = None
+    try:
+        file_path = await reply.download()
+        direct_url = await upload_image_to_catbox(file_path)
+
+        await status_msg.edit_text(
+            f"✅ **Gambar Berhasil Diunggah!**\n\n"
+            f"🔗 **Direct URL:**\n`{direct_url}`\n\n"
+            f"💡 **Format Pakai di /setweb:**\n"
+            f"`/setweb <ID_CH> [JUDUL | SUBTITLE | BADGE | {direct_url}]`"
+        )
+    except Exception as e:
+        await status_msg.edit_text(f"❌ Gagal memproses gambar: `{e}`")
+    finally:
+        if file_path and os.path.exists(file_path):
+            os.remove(file_path)
 
 
 # ================= FITUR GIT PULL & RESTART (OWNER ONLY) =================
@@ -316,10 +368,11 @@ async def set_webapp_buttons_handler(client: Client, message: Message):
     if len(parts) < 2 or len(lines) < 2:
         return await message.reply_text(
             "⚠️ **Format /setweb:**\n\n"
-            "`/setweb -100xxxxxxxxxx [JUDUL | SUBTITLE | BADGE]\n"
+            "`/setweb -100xxxxxxxxxx [JUDUL | SUBTITLE | BADGE | URL_BACKGROUND]\n"
             "🔥 Join VIP - https://t.me/channel\n"
             "💎 Akses Bot - https://t.me/bot\n"
-            "💬 Admin - https://t.me/admin`"
+            "💬 Admin - https://t.me/admin`\n\n"
+            "*(Catatan: URL_BACKGROUND bersifat opsional)*"
         )
 
     channel_id_str = parts[1]
@@ -327,6 +380,7 @@ async def set_webapp_buttons_handler(client: Client, message: Message):
     custom_title = "✦ PILIHAN AKSES VIP ✦"
     custom_subtitle = "Silakan pilih menu layanan di bawah ini:"
     custom_badge = "OFFICIAL PORTAL"
+    custom_bg = ""
 
     match = re.search(r"\[(.*?)\]", first_line)
     if match:
@@ -337,6 +391,8 @@ async def set_webapp_buttons_handler(client: Client, message: Message):
             custom_subtitle = header_data[1]
         if len(header_data) >= 3 and header_data[2]:
             custom_badge = header_data[2]
+        if len(header_data) >= 4 and header_data[3]:
+            custom_bg = clean_url(header_data[3])
 
     btn_lines = lines[1:]
     webapp_items = []
@@ -355,6 +411,7 @@ async def set_webapp_buttons_handler(client: Client, message: Message):
         "title": custom_title,
         "subtitle": custom_subtitle,
         "badge": custom_badge,
+        "background": custom_bg,
         "items": webapp_items,
     }
 
@@ -367,6 +424,8 @@ async def set_webapp_buttons_handler(client: Client, message: Message):
     data[channel_id_str] = button_structure
     save_all_data(data)
 
+    bg_info = f"`{custom_bg}`" if custom_bg else "*(Bawaan)*"
+
     try:
         preview = get_channel_markup(int(channel_id_str))
         await message.reply_text(
@@ -374,6 +433,7 @@ async def set_webapp_buttons_handler(client: Client, message: Message):
             f"• **Badge:** `{custom_badge}`\n"
             f"• **Judul:** `{custom_title}`\n"
             f"• **Subjudul:** `{custom_subtitle}`\n"
+            f"• **Background:** {bg_info}\n"
             f"• **Channel:** `{channel_id_str}`\n\n"
             "Pratinjau tombol channel:",
             reply_markup=preview,
