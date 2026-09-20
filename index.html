@@ -9,6 +9,10 @@
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     body {
       background-color: #0b0f19;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
       color: #ffffff;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       display: flex;
@@ -16,7 +20,27 @@
       align-items: center;
       padding: 28px 16px;
       min-height: 100vh;
+      position: relative;
     }
+
+    /* Lapisan overlay transparan gelap agar teks tetap jelas terbaca */
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(11, 15, 25, 0.78);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .badge, h1, p.subtitle, .btn-container, .footer {
+      position: relative;
+      z-index: 1;
+    }
+
     .badge {
       background: rgba(255, 255, 255, 0.08);
       border: 1px solid rgba(255, 255, 255, 0.15);
@@ -28,15 +52,16 @@
       text-transform: uppercase;
       color: #38bdf8;
       font-weight: 600;
+      backdrop-filter: blur(4px);
     }
-    h1 { font-size: 22px; font-weight: 800; margin-bottom: 6px; text-align: center; }
-    p.subtitle { font-size: 13px; color: #94a3b8; margin-bottom: 24px; text-align: center; }
+    h1 { font-size: 22px; font-weight: 800; margin-bottom: 6px; text-align: center; text-shadow: 0 2px 8px rgba(0,0,0,0.6); }
+    p.subtitle { font-size: 13px; color: #cbd5e1; margin-bottom: 24px; text-align: center; text-shadow: 0 1px 4px rgba(0,0,0,0.6); }
     .btn-container { width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 13px; }
     .btn {
       display: flex; align-items: center; justify-content: center;
       width: 100%; padding: 16px; font-size: 15px; font-weight: 700;
       color: #ffffff; text-decoration: none; border-radius: 14px;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.35); transition: transform 0.15s ease;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.45); transition: transform 0.15s ease;
     }
     .btn:active { transform: scale(0.97); filter: brightness(0.85); }
     .color-0 { background: linear-gradient(135deg, #ec4899, #e11d48); }
@@ -44,7 +69,7 @@
     .color-2 { background: linear-gradient(135deg, #06b6d4, #0284c7); }
     .color-3 { background: linear-gradient(135deg, #f59e0b, #d97706); }
     .color-4 { background: linear-gradient(135deg, #22c55e, #16a34a); }
-    .footer { margin-top: auto; padding-top: 30px; font-size: 11px; color: #64748b; }
+    .footer { margin-top: auto; padding-top: 30px; font-size: 11px; color: #94a3b8; text-shadow: 0 1px 3px rgba(0,0,0,0.6); }
   </style>
 </head>
 <body>
@@ -70,24 +95,13 @@
       try {
         const payload = JSON.parse(decodeURIComponent(rawData));
         
-        // Cek apakah ada data judul kustom
+        // Teks kustom
         if (payload.title) document.getElementById("app-title").innerText = payload.title;
-        if (payload.subtitle) document.getElementById("app-subtitle").innerText = payload.subtitle;
-        if (payload.badge) document.getElementById("app-badge").innerText = payload.badge;
+        if (payload.subtitle) document.getElementById("appKode modul mana yang ingin ditampilkan secara utuh? 
 
-        // Render tombol
-        const items = payload.items || payload;
-        items.forEach((item, index) => {
-          const a = document.createElement("a");
-          a.href = item.url;
-          a.innerText = item.text;
-          a.className = `btn color-${index % 5}`;
-          container.appendChild(a);
-        });
-      } catch (err) {
-        container.innerHTML = "<p style='color:#ef4444; font-size:13px;'>Gagal memuat konfigurasi.</p>";
-      }
-    }
-  </script>
-</body>
-</html>
+Apakah Anda membutuhkan script lengkap untuk:
+1. **Modul Analisis Trading & Alert** (integrasi RSI, MACD, SMC / alerts),
+2. **Modul Pencatatan Keuangan** (rekap 30 hari & penyimpanan bukti/foto via cached media), atau
+3. Script integrasi lainnya?
+
+Beri tahu nama modul atau fitur spesifik yang ingin digenerate ulang agar bisa langsung disusun lengkap.
