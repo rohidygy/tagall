@@ -7,43 +7,56 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-    body {
+    
+    html, body {
+      width: 100%;
+      height: 100%;
       background-color: #0b0f19;
+      color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* Elemen Khusus Background */
+    #bg-layer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
-      background-attachment: fixed;
-      color: #ffffff;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      z-index: 0;
+      opacity: 0; /* Mulai 0, jika ada bg akan diisi JS */
+      transition: opacity 0.3s ease;
+    }
+
+    /* Lapisan Gelap Tipis agar Teks Tetap Terbaca */
+    #overlay-layer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(11, 15, 25, 0.65);
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .main-content {
+      position: relative;
+      z-index: 2;
       display: flex;
       flex-direction: column;
       align-items: center;
       padding: 28px 16px;
       min-height: 100vh;
-      position: relative;
-    }
-
-    /* Lapisan gelap transparan agar teks selalu terbaca jelas */
-    body::before {
-      content: "";
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(11, 15, 25, 0.75);
-      z-index: 0;
-      pointer-events: none;
-    }
-
-    .badge, h1, p.subtitle, .btn-container, .footer {
-      position: relative;
-      z-index: 1;
     }
 
     .badge {
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.2);
       padding: 6px 14px;
       border-radius: 20px;
       font-size: 11px;
@@ -52,16 +65,16 @@
       text-transform: uppercase;
       color: #38bdf8;
       font-weight: 600;
-      backdrop-filter: blur(4px);
+      backdrop-filter: blur(5px);
     }
-    h1 { font-size: 22px; font-weight: 800; margin-bottom: 6px; text-align: center; text-shadow: 0 2px 8px rgba(0,0,0,0.6); }
-    p.subtitle { font-size: 13px; color: #cbd5e1; margin-bottom: 24px; text-align: center; text-shadow: 0 1px 4px rgba(0,0,0,0.6); }
+    h1 { font-size: 22px; font-weight: 800; margin-bottom: 6px; text-align: center; text-shadow: 0 2px 8px rgba(0,0,0,0.8); }
+    p.subtitle { font-size: 13px; color: #cbd5e1; margin-bottom: 24px; text-align: center; text-shadow: 0 1px 4px rgba(0,0,0,0.8); }
     .btn-container { width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 13px; }
     .btn {
       display: flex; align-items: center; justify-content: center;
       width: 100%; padding: 16px; font-size: 15px; font-weight: 700;
       color: #ffffff; text-decoration: none; border-radius: 14px;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.45); transition: transform 0.15s ease;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.5); transition: transform 0.15s ease;
     }
     .btn:active { transform: scale(0.97); filter: brightness(0.85); }
     .color-0 { background: linear-gradient(135deg, #ec4899, #e11d48); }
@@ -69,18 +82,42 @@
     .color-2 { background: linear-gradient(135deg, #06b6d4, #0284c7); }
     .color-3 { background: linear-gradient(135deg, #f59e0b, #d97706); }
     .color-4 { background: linear-gradient(135deg, #22c55e, #16a34a); }
-    .footer { margin-top: auto; padding-top: 30px; font-size: 11px; color: #94a3b8; text-shadow: 0 1px 3px rgba(0,0,0,0.6); }
+    .footer { margin-top: auto; padding-top: 30px; font-size: 11px; color: #94a3b8; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
+    
+    #debug-log {
+      position: fixed;
+      bottom: 5px;
+      left: 5px;
+      font-size: 10px;
+      color: #f87171;
+      background: rgba(0,0,0,0.7);
+      padding: 4px 8px;
+      border-radius: 4px;
+      z-index: 99;
+      max-width: 90%;
+      word-break: break-all;
+      display: none;
+    }
   </style>
 </head>
 <body>
 
-  <div class="badge" id="app-badge">OFFICIAL PORTAL</div>
-  <h1 id="app-title">✦ PORTAL RESMI ✦</h1>
-  <p class="subtitle" id="app-subtitle">Silakan pilih menu layanan di bawah ini:</p>
+  <!-- Layer Background -->
+  <div id="bg-layer"></div>
+  <div id="overlay-layer"></div>
 
-  <div class="btn-container" id="menu-list"></div>
+  <!-- Konten WebApp -->
+  <div class="main-content">
+    <div class="badge" id="app-badge">OFFICIAL PORTAL</div>
+    <h1 id="app-title">✦ PORTAL RESMI ✦</h1>
+    <p class="subtitle" id="app-subtitle">Silakan pilih menu layanan di bawah ini:</p>
 
-  <div class="footer">© 2026 Portal Layanan Resmi.</div>
+    <div class="btn-container" id="menu-list"></div>
+
+    <div class="footer">© 2026 Portal Layanan Resmi.</div>
+  </div>
+
+  <div id="debug-log"></div>
 
   <script>
     if (window.Telegram && window.Telegram.WebApp) {
@@ -88,8 +125,15 @@
       window.Telegram.WebApp.expand();
     }
 
+    const logBox = document.getElementById("debug-log");
+    function showDebug(msg) {
+      logBox.style.display = "block";
+      logBox.innerText = msg;
+    }
+
     const rawData = window.location.hash.substring(1);
     const container = document.getElementById("menu-list");
+    const bgLayer = document.getElementById("bg-layer");
 
     if (rawData) {
       try {
@@ -99,10 +143,20 @@
         if (payload.subtitle) document.getElementById("app-subtitle").innerText = payload.subtitle;
         if (payload.badge) document.getElementById("app-badge").innerText = payload.badge;
 
-        // Pasang gambar latar belakang jika tersedia
+        // PEMASANGAN BACKGROUND
         if (payload.background && payload.background.trim() !== "") {
-          const cleanBg = payload.background.trim();
-          document.body.style.backgroundImage = "url('" + cleanBg + "')";
+          const bgUrl = payload.background.trim();
+          
+          // Pra-muat gambar untuk memastikan link aktif
+          const imgTester = new Image();
+          imgTester.src = bgUrl;
+          imgTester.onload = function() {
+            bgLayer.style.backgroundImage = `url('${bgUrl}')`;
+            bgLayer.style.opacity = "1";
+          };
+          imgTester.onerror = function() {
+            showDebug("Gagal memuat link gambar background: " + bgUrl);
+          };
         }
 
         const items = payload.items || payload;
@@ -114,8 +168,10 @@
           container.appendChild(a);
         });
       } catch (err) {
-        container.innerHTML = "<p style='color:#ef4444; font-size:13px;'>Gagal memuat konfigurasi.</p>";
+        showDebug("Error parsing JSON: " + err.message);
       }
+    } else {
+      showDebug("Tidak ada parameter hash yang diterima.");
     }
   </script>
 </body>
