@@ -83,16 +83,47 @@ def clean_url(raw_url: str) -> str:
 
 
 async def upload_image_to_catbox(file_path: str) -> str:
-    url = "https://catbox.moe/user/api.php"
-    async with aiohttp.ClientSession() as session:
-        with open(file_path, "rb") as f:
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    }
+
+    # Percobaan 1: Catbox
+    try:
+        url_catbox = "https://catbox.moe/user/api.php"
+        async with aiohttp.ClientSession(headers=headers) as session:
             data = aiohttp.FormData()
             data.add_field("reqtype", "fileupload")
-            data.add_field("fileToUpload", f, filename=os.path.basename(file_path))
-            async with session.post(url, data=data) as resp:
+            with open(file_path, "rb") as f:
+                data.add_field(
+                    "fileToUpload", f.read(), filename=os.path.basename(file_path)
+                )
+            async with session.post(
+                url_catbox, data=data, timeout=aiohttp.ClientTimeout(total=20)
+            ) as resp:
+                res_text = (await resp.text()).strip()
+                if resp.status == 200 and res_text.startswith("http"):
+                    return res_text
+    except Exception as err:
+        logging.warning(f"Catbox gagal ({err}), mencoba server cadangan...")
+
+    # Percobaan 2: Fallback ke tmpfiles.org
+    try:
+        url_tmp = "https://tmpfiles.org/api/v1/upload"
+        async with aiohttp.ClientSession(headers=headers) as session:
+            data = aiohttp.FormData()
+            with open(file_path, "rb") as f:
+                data.add_field("file", f.read(), filename=os.path.basename(file_path))
+            async with session.post(
+                url_tmp, data=data, timeout=aiohttp.ClientTimeout(total=20)
+            ) as resp:
                 if resp.status == 200:
-                    return (await resp.text()).strip()
-                raise Exception(f"Upload gagal: status kode {resp.status}")
+                    res_json = await resp.json()
+                    raw_url = res_json.get("data", {}).get("url")
+                    if raw_url:
+                        return raw_url.replace("tmpfiles.org/", "tmpfiles.org/dl/")
+                raise Exception(f"Status tmpfiles: {resp.status}")
+    except Exception as e:
+        raise Exception(f"Semua server upload gagal: {e}")
 
 
 def get_channel_markup(chat_id: int):
@@ -169,9 +200,7 @@ async def set_image_handler(client: Client, message: Message):
             "2. Balas (reply) foto tersebut dengan mengetik `/setimg`."
         )
 
-    status_msg = await message.reply_text(
-        "⏳ *Sedang memproses dan mengunggah gambar...*"
-    )
+    status_msg = await message.reply_text("⏳ *Sedang memproses dan mengunggah gambar...*")
     file_path = None
     try:
         file_path = await reply.download()
