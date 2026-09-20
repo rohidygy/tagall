@@ -169,7 +169,9 @@ async def set_image_handler(client: Client, message: Message):
             "2. Balas (reply) foto tersebut dengan mengetik `/setimg`."
         )
 
-    status_msg = await message.reply_text("⏳ *Sedang memproses dan mengunggah gambar...*")
+    status_msg = await message.reply_text(
+        "⏳ *Sedang memproses dan mengunggah gambar...*"
+    )
     file_path = None
     try:
         file_path = await reply.download()
