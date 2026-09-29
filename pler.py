@@ -3,27 +3,24 @@ import json
 import logging
 import os
 import re
-import sys
 
 from pyrogram_styled import Client, filters, idle
 from pyrogram_styled.enums import ParseMode
 from pyrogram_styled.errors import FloodWait
 from pyrogram_styled.helpers.helpers import ikb
-from pyrogram_styled.types import (
-    InlineKeyboardButton,
-    InlineKeyboardMarkup,
-    Message,
-)
+from pyrogram_styled.types import (InlineKeyboardButton, InlineKeyboardMarkup,
+                                   Message)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # ================= DAFTAR EMOJI & WARNA =================
 AUTO_PRESETS = [
-    ("🔥", "danger"),     # Merah menyala
-    ("💎", "primary"),    # Biru / Putih kontras
-    ("⚡️", "success"),   # Hijau
+    ("🔥", "danger"),  # Merah menyala
+    ("💎", "primary"),  # Biru / Putih kontras
+    ("⚡️", "success"),  # Hijau
     ("🚀", "primary"),
 ]
+
 
 # ================= LOAD ENV =================
 def _load_env_file(path: str):
@@ -37,6 +34,7 @@ def _load_env_file(path: str):
             key, value = line.split("=", 1)
             os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
 
+
 _load_env_file(os.path.join(BASE_DIR, ".env"))
 
 API_ID = int(os.environ.get("API_ID", 0))
@@ -46,7 +44,9 @@ OWNER_ID = int(os.environ.get("OWNER_ID", "1492743978"))
 
 DATA_FILE = os.path.join(BASE_DIR, "channel_buttons.json")
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
 app = Client(
     "channel_button_bot",
@@ -55,6 +55,7 @@ app = Client(
     bot_token=BOT_TOKEN,
     parse_mode=ParseMode.HTML,
 )
+
 
 # ================= DATABASE HANDLER =================
 def get_all_data() -> dict:
@@ -66,15 +67,23 @@ def get_all_data() -> dict:
     except Exception:
         return {}
 
+
 def save_all_data(data: dict):
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=4, ensure_ascii=False)
+
 
 def get_channel_grid(chat_id: int):
     data = get_all_data()
     raw = str(chat_id)
     clean = raw.replace("-100", "").replace("-", "")
-    return data.get(raw) or data.get(f"-100{clean}") or data.get(f"-{clean}") or data.get(clean)
+    return (
+        data.get(raw)
+        or data.get(f"-100{clean}")
+        or data.get(f"-{clean}")
+        or data.get(clean)
+    )
+
 
 def build_styled_markup(grid: list) -> InlineKeyboardMarkup:
     styled_rows = []
@@ -98,6 +107,7 @@ def build_styled_markup(grid: list) -> InlineKeyboardMarkup:
         return ikb(styled_rows)
     except Exception:
         return InlineKeyboardMarkup(plain_rows)
+
 
 # ================= PERINTAH BOT =================
 @app.on_message(filters.private & filters.command("setbutton") & filters.user(OWNER_ID))
@@ -141,8 +151,9 @@ async def set_button_cmd(client: Client, message: Message):
     await message.reply(
         f"✅ <b>Tombol Berhasil Disimpan!</b>\n"
         f"Channel: <code>{chat_key}</code>\n\nPratinjau:",
-        reply_markup=markup
+        reply_markup=markup,
     )
+
 
 # ================= PERINTAH POSTING (PASTI MUNCUL TOMBOL) =================
 @app.on_message(filters.private & filters.command("post") & filters.user(OWNER_ID))
@@ -162,7 +173,9 @@ async def post_to_channel_cmd(client: Client, message: Message):
     ch_id = args[1].strip()
     grid = get_channel_grid(int(ch_id)) if ch_id.lstrip("-").isdigit() else None
     if not grid:
-        return await message.reply(f"❌ Belum ada tombol disetel untuk channel <code>{ch_id}</code>.")
+        return await message.reply(
+            f"❌ Belum ada tombol disetel untuk channel <code>{ch_id}</code>."
+        )
 
     markup = build_styled_markup(grid)
     target_chat = int(ch_id)
@@ -172,16 +185,24 @@ async def post_to_channel_cmd(client: Client, message: Message):
             await reply.copy(chat_id=target_chat, reply_markup=markup)
         elif len(args) >= 3:
             content = args[2]
-            await client.send_message(chat_id=target_chat, text=content, reply_markup=markup)
+            await client.send_message(
+                chat_id=target_chat, text=content, reply_markup=markup
+            )
         else:
-            return await message.reply("❌ Balas pesan atau sertakan teks setelah ID channel.")
+            return await message.reply(
+                "❌ Balas pesan atau sertakan teks setelah ID channel."
+            )
 
-        await message.reply("🔥 <b>Postingan berhasil terbit di channel lengkap dengan tombol berwarna!</b>")
+        await message.reply(
+            "🔥 <b>Postingan berhasil terbit di channel lengkap dengan tombol berwarna!</b>"
+        )
     except Exception as e:
         await message.reply(f"❌ Gagal mengirim: <code>{e}</code>")
 
+
 # ================= LISTENER JIKA POST MANUAL DI CHANNEL =================
 _PROCESSED_MSGS = set()
+
 
 @app.on_message(filters.channel)
 async def auto_channel_post_handler(client: Client, message: Message):
@@ -205,19 +226,20 @@ async def auto_channel_post_handler(client: Client, message: Message):
 
     try:
         await client.edit_message_reply_markup(
-            chat_id=cid,
-            message_id=mid,
-            reply_markup=styled_markup
+            chat_id=cid, message_id=mid, reply_markup=styled_markup
         )
         print(f"✅ Tombol terpasang di ID {mid}")
     except FloodWait as flood:
         await asyncio.sleep(flood.value)
         try:
-            await client.edit_message_reply_markup(chat_id=cid, message_id=mid, reply_markup=styled_markup)
+            await client.edit_message_reply_markup(
+                chat_id=cid, message_id=mid, reply_markup=styled_markup
+            )
         except Exception:
             pass
     except Exception as e:
         print(f"❌ Gagal edit tombol: {e}")
+
 
 # ================= RUNNER =================
 async def main():
@@ -225,6 +247,7 @@ async def main():
     logging.info("Bot Channel Button Manager Aktif.")
     await idle()
     await app.stop()
+
 
 if __name__ == "__main__":
     app.run(main())
