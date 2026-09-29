@@ -4,22 +4,12 @@ import logging
 import os
 import re
 
+import aiohttp
 from pyrogram_styled import Client, filters, idle
 from pyrogram_styled.enums import ParseMode
-from pyrogram_styled.errors import FloodWait
-from pyrogram_styled.helpers.helpers import ikb
-from pyrogram_styled.types import (InlineKeyboardButton, InlineKeyboardMarkup,
-                                   Message)
+from pyrogram_styled.types import Message
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-# ================= DAFTAR EMOJI & WARNA =================
-AUTO_PRESETS = [
-    ("🔥", "danger"),  # Merah menyala
-    ("💎", "primary"),  # Biru / Putih kontras
-    ("⚡️", "success"),  # Hijau
-    ("🚀", "primary"),
-]
 
 
 # ================= LOAD ENV =================
@@ -43,6 +33,7 @@ BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
 OWNER_ID = int(os.environ.get("OWNER_ID", "1492743978"))
 
 DATA_FILE = os.path.join(BASE_DIR, "channel_buttons.json")
+STYLES = ("danger", "primary", "success")
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -57,7 +48,33 @@ app = Client(
 )
 
 
-# ================= DATABASE HANDLER =================
+# ================= BOT API LANGSUNG =================
+async def bot_api(method: str, payload: dict) -> dict:
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/{method}"
+    async with aiohttp.ClientSession() as s:
+        async with s.post(url, json=payload) as r:
+            return await r.json()
+
+
+def build_markup(grid: list) -> dict:
+    """Ubah grid JSON -> reply_markup Bot API (warna + emoji premium)."""
+    rows = []
+    for row in grid:
+        btns = []
+        for item in row:
+            b = {
+                "text": item["text"],
+                "url": item["url"],
+                "style": item.get("style", "primary"),
+            }
+            if item.get("emoji_id"):
+                b["icon_custom_emoji_id"] = str(item["emoji_id"])
+            btns.append(b)
+        rows.append(btns)
+    return {"inline_keyboard": rows}
+
+
+# ================= DATABASE =================
 def get_all_data() -> dict:
     if not os.path.exists(DATA_FILE):
         return {}
@@ -85,123 +102,109 @@ def get_channel_grid(chat_id: int):
     )
 
 
-def build_styled_markup(grid: list) -> InlineKeyboardMarkup:
-    styled_rows = []
-    plain_rows = []
-
-    for r_idx, row in enumerate(grid):
-        s_row = []
-        p_row = []
-        for c_idx, item in enumerate(row):
-            text = item.get("text", "").strip()
-            url = item.get("url", "").strip()
-            style = item.get("style", "primary")
-
-            p_row.append(InlineKeyboardButton(text=text, url=url))
-            s_row.append((f" {text} ", url, 0, style))
-
-        styled_rows.append(s_row)
-        plain_rows.append(p_row)
-
-    try:
-        return ikb(styled_rows)
-    except Exception:
-        return InlineKeyboardMarkup(plain_rows)
-
-
-# ================= PERINTAH BOT =================
+# ================= /setbutton =================
+# Format tiap baris:  TEKS | URL | EMOJI_ID | STYLE
+# EMOJI_ID & STYLE opsional. STYLE: danger (merah), primary (biru), success (hijau)
 @app.on_message(filters.private & filters.command("setbutton") & filters.user(OWNER_ID))
 async def set_button_cmd(client: Client, message: Message):
-    lines = [line.strip() for line in message.text.splitlines() if line.strip()]
-    first_parts = lines[0].split()
-    if len(first_parts) < 2 or len(lines) < 2:
+    lines = [l.strip() for l in message.text.splitlines() if l.strip()]
+    first = lines[0].split()
+    if len(first) < 2 or len(lines) < 2:
         return await message.reply(
-            "⚠️ <b>Format Penggunaan:</b>\n\n"
+            "⚠️ <b>Format:</b>\n\n"
             "<code>/setbutton -100xxxxxxxxxx\n"
-            "🔥 LIVE NYA DISINI - https://link1.com\n"
-            "💎 VVIP NYA DISINI - https://link2.com</code>"
+            "LIVE NYA DISINI | https://link1.com | 5368324170671202286 | danger\n"
+            "VVIP NYA DISINI | https://link2.com | 5368324170671202286 | primary</code>\n\n"
+            "Emoji ID & style boleh dikosongkan.\n"
+            "Untuk dapat Emoji ID: kirim emoji premium ke bot ini."
         )
 
-    chat_key = first_parts[1].strip()
+    chat_key = first[1].strip()
     grid = []
     for r_idx, line in enumerate(lines[1:]):
-        row = []
-        for c_idx, b in enumerate(line.split("|")):
-            if " - " in b:
-                txt, url = b.split(" - ", 1)
-                txt = txt.strip()
-                url = url.strip()
-                if not re.match(r"^[a-zA-Z][a-zA-Z0-9+.\-]*://", url):
-                    url = "https://" + url
-
-                # Baris 1: Merah (danger), Baris 2: Biru/Putih (primary)
-                btn_style = "danger" if r_idx == 0 else "primary"
-                row.append({"text": txt, "url": url, "style": btn_style})
-        if row:
-            grid.append(row)
+        p = [x.strip() for x in line.split("|")]
+        if len(p) < 2:
+            continue
+        text, url = p[0], p[1]
+        if not re.match(r"^[a-zA-Z][a-zA-Z0-9+.\-]*://", url):
+            url = "https://" + url
+        emoji_id = p[2] if len(p) > 2 and p[2].isdigit() else ""
+        style = p[3] if len(p) > 3 and p[3] in STYLES else STYLES[min(r_idx, 1)]
+        grid.append([{"text": text, "url": url, "style": style, "emoji_id": emoji_id}])
 
     if not grid:
-        return await message.reply("❌ Format salah! Gunakan pemisah: <code> - </code>")
+        return await message.reply("❌ Format salah! Pisahkan dengan <code> | </code>")
 
     data = get_all_data()
     data[chat_key] = grid
     save_all_data(data)
 
-    markup = build_styled_markup(grid)
-    await message.reply(
-        f"✅ <b>Tombol Berhasil Disimpan!</b>\n"
-        f"Channel: <code>{chat_key}</code>\n\nPratinjau:",
-        reply_markup=markup,
+    res = await bot_api(
+        "sendMessage",
+        {
+            "chat_id": message.chat.id,
+            "text": f"✅ Tombol disimpan untuk <code>{chat_key}</code>\nPratinjau:",
+            "parse_mode": "HTML",
+            "reply_markup": build_markup(grid),
+        },
     )
+    if not res.get("ok"):
+        await message.reply(f"❌ Gagal pratinjau: <code>{res.get('description')}</code>")
 
 
-# ================= PERINTAH POSTING (PASTI MUNCUL TOMBOL) =================
+# ================= AMBIL EMOJI ID =================
+@app.on_message(filters.private & filters.user(OWNER_ID) & ~filters.command(["setbutton", "post"]))
+async def get_emoji_id(client: Client, message: Message):
+    ents = message.entities or message.caption_entities or []
+    ids = [e.custom_emoji_id for e in ents if getattr(e, "custom_emoji_id", None)]
+    if ids:
+        await message.reply(
+            "🆔 <b>Emoji ID:</b>\n" + "\n".join(f"<code>{i}</code>" for i in ids)
+        )
+
+
+# ================= /post (manual dari bot) =================
 @app.on_message(filters.private & filters.command("post") & filters.user(OWNER_ID))
 async def post_to_channel_cmd(client: Client, message: Message):
     args = message.text.split(None, 2)
     reply = message.reply_to_message
-
-    if len(args) < 2:
+    if len(args) < 2 or not args[1].lstrip("-").isdigit():
         return await message.reply(
-            "⚠️ <b>Cara Posting Langsung ke Channel:</b>\n\n"
-            "1. Balas foto / video / teks dengan perintah:\n"
-            "   <code>/post -100xxxxxxxxxx</code>\n\n"
-            "2. Atau kirim teks langsung:\n"
-            "   <code>/post -100xxxxxxxxxx Teks postingan kamu di sini</code>"
+            "⚠️ Balas pesan dengan <code>/post -100xxxxxxxxxx</code> "
+            "atau <code>/post -100xxxxxxxxxx teks</code>"
         )
-
-    ch_id = args[1].strip()
-    grid = get_channel_grid(int(ch_id)) if ch_id.lstrip("-").isdigit() else None
+    target = int(args[1])
+    grid = get_channel_grid(target)
     if not grid:
-        return await message.reply(
-            f"❌ Belum ada tombol disetel untuk channel <code>{ch_id}</code>."
+        return await message.reply("❌ Belum ada tombol untuk channel ini.")
+
+    markup = build_markup(grid)
+    if reply:
+        res = await bot_api(
+            "copyMessage",
+            {
+                "chat_id": target,
+                "from_chat_id": reply.chat.id,
+                "message_id": reply.id,
+                "reply_markup": markup,
+            },
         )
-
-    markup = build_styled_markup(grid)
-    target_chat = int(ch_id)
-
-    try:
-        if reply:
-            await reply.copy(chat_id=target_chat, reply_markup=markup)
-        elif len(args) >= 3:
-            content = args[2]
-            await client.send_message(
-                chat_id=target_chat, text=content, reply_markup=markup
-            )
-        else:
-            return await message.reply(
-                "❌ Balas pesan atau sertakan teks setelah ID channel."
-            )
-
-        await message.reply(
-            "🔥 <b>Postingan berhasil terbit di channel lengkap dengan tombol berwarna!</b>"
+    elif len(args) >= 3:
+        res = await bot_api(
+            "sendMessage",
+            {"chat_id": target, "text": args[2], "reply_markup": markup},
         )
-    except Exception as e:
-        await message.reply(f"❌ Gagal mengirim: <code>{e}</code>")
+    else:
+        return await message.reply("❌ Balas pesan atau sertakan teks.")
+
+    if res.get("ok"):
+        await message.reply("🔥 Terkirim dengan tombol.")
+    else:
+        await message.reply(f"❌ Gagal: <code>{res.get('description')}</code>")
 
 
-# ================= LISTENER JIKA POST MANUAL DI CHANNEL =================
-_PROCESSED_MSGS = set()
+# ================= AUTO PASANG TOMBOL SAAT POST DI CHANNEL =================
+_PROCESSED = set()
 
 
 @app.on_message(filters.channel)
@@ -209,36 +212,32 @@ async def auto_channel_post_handler(client: Client, message: Message):
     if not message or getattr(message, "empty", False) or message.service:
         return
 
-    cid = message.chat.id
-    mid = message.id
-    key_event = f"{cid}_{mid}"
-
-    if key_event in _PROCESSED_MSGS:
+    key = f"{message.chat.id}_{message.id}"
+    if key in _PROCESSED:
         return
-    _PROCESSED_MSGS.add(key_event)
+    _PROCESSED.add(key)
 
-    grid = get_channel_grid(cid)
+    grid = get_channel_grid(message.chat.id)
     if not grid:
         return
 
     await asyncio.sleep(0.5)
-    styled_markup = build_styled_markup(grid)
+    payload = {
+        "chat_id": message.chat.id,
+        "message_id": message.id,
+        "reply_markup": build_markup(grid),
+    }
+    res = await bot_api("editMessageReplyMarkup", payload)
 
-    try:
-        await client.edit_message_reply_markup(
-            chat_id=cid, message_id=mid, reply_markup=styled_markup
-        )
-        print(f"✅ Tombol terpasang di ID {mid}")
-    except FloodWait as flood:
-        await asyncio.sleep(flood.value)
-        try:
-            await client.edit_message_reply_markup(
-                chat_id=cid, message_id=mid, reply_markup=styled_markup
-            )
-        except Exception:
-            pass
-    except Exception as e:
-        print(f"❌ Gagal edit tombol: {e}")
+    if not res.get("ok"):
+        wait = (res.get("parameters") or {}).get("retry_after")
+        if wait:
+            await asyncio.sleep(wait)
+            res = await bot_api("editMessageReplyMarkup", payload)
+    if res.get("ok"):
+        logging.info(f"✅ Tombol terpasang di ID {message.id}")
+    else:
+        logging.error(f"❌ Gagal pasang tombol: {res.get('description')}")
 
 
 # ================= RUNNER =================
