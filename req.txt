@@ -1,4 +1,4 @@
-telethon
+git+https://github.com/navycodes/pyro@styled
 cryptg
 asyncio
 python-dotenv
