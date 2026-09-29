@@ -204,7 +204,7 @@ async def git_pull_cmd(client: Client, message: Message):
     msg = await message.reply("⚡ <i>Menarik pembaruan dari Git...</i>")
     try:
         proc = await asyncio.create_subprocess_shell(
-            "git fetch --all && git reset --hard origin/$(git rev-parse --abbrev-ref HEAD)",[cite: 1]
+            "git fetch --all && git reset --hard origin/$(git rev-parse --abbrev-ref HEAD)",
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
             cwd=BASE_DIR,
