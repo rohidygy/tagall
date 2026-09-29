@@ -185,7 +185,7 @@ async def direct_post_cmd(client: Client, message: Message):
         else:
             return await message.reply("❌ Balas sebuah pesan atau sertakan teks konten setelah ID channel.")
 
-        await message.reply(f"🔥 <b>Postingan berhasil dikirim ke channel lengkap dengan emoji bergerak!</b>")
+        await message.reply("🔥 <b>Postingan berhasil dikirim ke channel lengkap dengan tombol & emoji bergerak!</b>")
     except Exception as e:
         await message.reply(f"❌ Gagal mengirim postingan: <code>{e}</code>")
 
@@ -228,7 +228,7 @@ async def git_pull_cmd(client: Client, message: Message):
     msg = await message.reply("⚡ <i>Menarik pembaruan dari Git...</i>")
     try:
         proc = await asyncio.create_subprocess_shell(
-            "git fetch --all && git reset --hard origin/$(git rev-parse --abbrev-ref HEAD)",[cite: 1]
+            "git fetch --all && git reset --hard origin/$(git rev-parse --abbrev-ref HEAD)",
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
             cwd=BASE_DIR,
@@ -273,14 +273,26 @@ async def auto_channel_post_handler(client: Client, message: Message):
     styled_markup = build_styled_markup(grid)
 
     try:
-        await client.edit_message_reply_markup(
-            chat_id=cid,
-            message_id=mid,
-            reply_markup=styled_markup
+        peer = await client.resolve_peer(cid)
+        raw_reply_markup = await styled_markup.write(client)
+        await client.invoke(
+            functions.messages.EditMessage(
+                peer=peer,
+                id=mid,
+                reply_markup=raw_reply_markup
+            )
         )
-        print(f"✅ Tombol dipasang di Pesan ID {mid}!")
-    except Exception as e:
-        print(f"❌ Gagal edit markup: {e}")
+        print(f"🔥 [SUCCESS] Tombol Berwarna & Emoji Bergerak BERHASIL dipasang di Pesan ID {mid}!")
+    except Exception:
+        try:
+            await client.edit_message_reply_markup(
+                chat_id=cid,
+                message_id=mid,
+                reply_markup=styled_markup
+            )
+            print(f"✅ Tombol dipasang via fallback di ID {mid}")
+        except Exception as e:
+            print(f"❌ Gagal edit markup: {e}")
 
 # ================= MAIN RUNNER =================
 async def main():
