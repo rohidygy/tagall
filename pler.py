@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import re
+import shutil
 import sys
 import urllib.parse
 from collections.abc import Awaitable, Callable
@@ -11,12 +12,10 @@ from typing import Any, Optional, Tuple, TypeVar
 
 import aiohttp
 from pyrogram_styled import Client, filters, idle
-from pyrogram_styled.enums import ParseMode
-from pyrogram_styled.errors import (DocumentInvalid, FloodWait,
-                                    MessageNotModified)
+from pyrogram_styled.enums import ChatType, ParseMode
+from pyrogram_styled.errors import DocumentInvalid, FloodWait, MessageNotModified
 from pyrogram_styled.helpers.helpers import clean_emoji
-from pyrogram_styled.types import (InlineKeyboardButton, InlineKeyboardMarkup,
-                                   Message)
+from pyrogram_styled.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 T = TypeVar("T")
@@ -24,32 +23,19 @@ T = TypeVar("T")
 # ================= DAFTAR EMOJI TERTANAM =================
 EMOJI_LIST = ["⚡️", "💎", "🔥", "🚀", "🔗", "💬", "👑", "✨"]
 
-
 # ================= PARSER FORMAT & STYLED PIPELINE =================
 def format_to_html(text: str | None) -> str:
     if not text:
         return ""
     t = text
     t = re.sub(r"!?\[([^\]]*?)\]\(tg://emoji\?id=(\d+)\)", r"\1", t)
-    t = re.sub(
-        r'<tg-emoji\s+emoji-id=[\'"]?(\d+)[\'"]?>(.*?)</tg-emoji>',
-        r"\2",
-        t,
-        flags=re.IGNORECASE | re.DOTALL,
-    )
-    t = re.sub(
-        r'<emoji\s+id=[\'"]?(\d+)[\'"]?\s*>(.*?)</emoji>',
-        r"\2",
-        t,
-        flags=re.IGNORECASE | re.DOTALL,
-    )
+    t = re.sub(r'<tg-emoji\s+emoji-id=[\'"]?(\d+)[\'"]?>(.*?)</tg-emoji>', r"\2", t, flags=re.IGNORECASE | re.DOTALL)
+    t = re.sub(r'<emoji\s+id=[\'"]?(\d+)[\'"]?\s*>(.*?)</emoji>', r"\2", t, flags=re.IGNORECASE | re.DOTALL)
     t = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", t, flags=re.DOTALL)
     t = re.sub(r"__(.+?)__", r"<i>\1</i>", t, flags=re.DOTALL)
     t = re.sub(r"(?<!\w)_([^_]+?)_(?!\w)", r"<i>\1</i>", t, flags=re.DOTALL)
     t = re.sub(r"`([^`]+?)`", r"<code>\1</code>", t)
-    t = re.sub(
-        r"\[([^\]]+?)\]\(((?:https?://\vert{}tg://)[^\)]+)\)", r'<a href="\2">\1</a>', t
-    )
+    t = re.sub(r"\[([^\]]+?)\]\(((?:https?://\vert{}tg://)[^\)]+)\)", r'<a href="\2">\1</a>', t)
     return t
 
 
@@ -58,9 +44,7 @@ def strip_custom_emojis(text: str | None) -> str:
         return ""
     cleaned = clean_emoji(text)
     if cleaned:
-        return re.sub(
-            r'<tg-emoji\s+emoji-id=[\'"]?\d+[\'"]?>(.*?)</tg-emoji>', r"\1", cleaned
-        )
+        return re.sub(r'<tg-emoji\s+emoji-id=[\'"]?\d+[\'"]?>(.*?)</tg-emoji>', r"\1", cleaned)
     return ""
 
 
@@ -126,9 +110,7 @@ _load_env_file(os.path.join(BASE_DIR, ".env"))
 def _require_env(name: str) -> str:
     value = os.environ.get(name)
     if not value:
-        sys.exit(
-            f"❌ Variabel {name} belum diisi (environment variable atau file .env)."
-        )
+        sys.exit(f"❌ Variabel {name} belum diisi (environment variable atau file .env).")
     return value
 
 
@@ -245,10 +227,7 @@ def build_markup(grid: list) -> InlineKeyboardMarkup:
 
             # Pastikan teks tombol memiliki icon emoji
             clean_btn_text = raw_text
-            if not any(
-                char in clean_btn_text
-                for char in ["⚡", "💎", "🔥", "🚀", "🔗", "💬", "👑", "✨"]
-            ):
+            if not any(char in clean_btn_text for char in ["⚡", "💎", "🔥", "🚀", "🔗", "💬", "👑", "✨"]):
                 clean_btn_text = f"{emoji_icon} {clean_btn_text}"
 
             btn_row.append(InlineKeyboardButton(text=clean_btn_text, url=url))
@@ -300,7 +279,10 @@ def payload_from_grid(grid) -> Optional[dict]:
 
 
 def webapp_grid(payload: dict) -> list:
-    return [[{"text": WEBAPP_BUTTON_TEXT, "url": build_webapp_link(payload)}]]
+    return [[{
+        "text": WEBAPP_BUTTON_TEXT,
+        "url": build_webapp_link(payload)
+    }]]
 
 
 async def save_after_preview(
@@ -313,7 +295,7 @@ async def save_after_preview(
         await safe_reply(
             message,
             f"⚠️ <b>Tidak disimpan</b> — Telegram menolak tombol ini:\n"
-            f"<code>{esc(e)}</code>",
+            f"<code>{esc(e)}</code>"
         )
         return False
 
@@ -364,9 +346,7 @@ async def upload_image(file_path: str) -> Tuple[str, bool]:
 
     errors = []
     timeout = aiohttp.ClientTimeout(total=60)
-    async with aiohttp.ClientSession(
-        headers=UPLOAD_HEADERS, timeout=timeout
-    ) as session:
+    async with aiohttp.ClientSession(headers=UPLOAD_HEADERS, timeout=timeout) as session:
         for name, func, temporary in providers:
             try:
                 return await func(session, content, filename), temporary
@@ -400,9 +380,7 @@ async def start_handler(client: Client, message: Message):
     admins = get_admins()
 
     if user_id not in admins:
-        return await safe_reply(
-            message, "👋 <b>Bot aktif mengelola tombol channel.</b>"
-        )
+        return await safe_reply(message, "👋 <b>Bot aktif mengelola tombol channel.</b>")
 
     is_owner = user_id == OWNER_ID
     role_text = "👑 <b>Owner Utama</b>" if is_owner else "🥇 <b>Admin Terdaftar</b>"
@@ -431,9 +409,7 @@ async def start_handler(client: Client, message: Message):
 # ================= SET TOMBOL (/setbutton) =================
 @app.on_message(filters.private & filters.command("setbutton") & is_bot_admin)
 async def set_normal_buttons_handler(client: Client, message: Message):
-    lines = [
-        line.strip() for line in command_text(message).splitlines() if line.strip()
-    ]
+    lines = [line.strip() for line in command_text(message).splitlines() if line.strip()]
     first_line_parts = lines[0].split() if lines else []
 
     if len(first_line_parts) < 2 or len(lines) < 2:
@@ -443,7 +419,7 @@ async def set_normal_buttons_handler(client: Client, message: Message):
             "<code>/setbutton -100xxxxxxxxxx\n"
             "Website - https://contoh.com\n"
             "CS 1 - https://t.me/admin1 | CS 2 - https://t.me/admin2\n"
-            "Join VIP - https://t.me/channel</code>",
+            "Join VIP - https://t.me/channel</code>"
         )
 
     chat_key = parse_channel_id(first_line_parts[1])
@@ -464,9 +440,7 @@ async def set_normal_buttons_handler(client: Client, message: Message):
             button_grid.append(row)
 
     if not button_grid:
-        return await safe_reply(
-            message, "❌ Format salah! Gunakan pemisah: <code> - </code>"
-        )
+        return await safe_reply(message, "❌ Format salah! Gunakan pemisah: <code> - </code>")
 
     await save_after_preview(
         message,
@@ -481,9 +455,7 @@ async def set_normal_buttons_handler(client: Client, message: Message):
 async def check_buttons_handler(client: Client, message: Message):
     args = message.text.split()
     if len(args) < 2:
-        return await safe_reply(
-            message, "Ketik: <code>/cekbutton &lt;ID_CHANNEL&gt;</code>"
-        )
+        return await safe_reply(message, "Ketik: <code>/cekbutton &lt;ID_CHANNEL&gt;</code>")
 
     chat_key = parse_channel_id(args[1])
     if chat_key is None:
@@ -491,25 +463,17 @@ async def check_buttons_handler(client: Client, message: Message):
 
     grid = get_all_data().get(chat_key)
     if not grid:
-        return await safe_reply(
-            message, f"ℹ️ Belum ada tombol untuk channel <code>{chat_key}</code>."
-        )
+        return await safe_reply(message, f"ℹ️ Belum ada tombol untuk channel <code>{chat_key}</code>.")
 
     markup = build_markup(grid)
-    await safe_reply(
-        message,
-        f"💎 <b>Tombol aktif channel</b> <code>{chat_key}</code>:",
-        reply_markup=markup,
-    )
+    await safe_reply(message, f"💎 <b>Tombol aktif channel</b> <code>{chat_key}</code>:", reply_markup=markup)
 
 
 @app.on_message(filters.private & filters.command("delbutton") & is_bot_admin)
 async def delete_buttons_handler(client: Client, message: Message):
     args = message.text.split()
     if len(args) < 2:
-        return await safe_reply(
-            message, "Ketik: <code>/delbutton &lt;ID_CHANNEL&gt;</code>"
-        )
+        return await safe_reply(message, "Ketik: <code>/delbutton &lt;ID_CHANNEL&gt;</code>")
 
     ch_id = parse_channel_id(args[1]) or args[1]
     data = get_all_data()
@@ -517,13 +481,9 @@ async def delete_buttons_handler(client: Client, message: Message):
     if ch_id in data:
         del data[ch_id]
         save_all_data(data)
-        await safe_reply(
-            message, f"🗑 Tombol channel <code>{esc(ch_id)}</code> berhasil dihapus."
-        )
+        await safe_reply(message, f"🗑 Tombol channel <code>{esc(ch_id)}</code> berhasil dihapus.")
     else:
-        await safe_reply(
-            message, f"⚠️ Channel <code>{esc(ch_id)}</code> tidak ditemukan."
-        )
+        await safe_reply(message, f"⚠️ Channel <code>{esc(ch_id)}</code> tidak ditemukan.")
 
 
 @app.on_message(filters.private & filters.command("listchannel") & is_bot_admin)
@@ -543,9 +503,7 @@ def restart_process():
     os.execl(sys.executable, sys.executable, *sys.argv)
 
 
-@app.on_message(
-    filters.private & filters.command(["update", "gitpull"]) & filters.user(OWNER_ID)
-)
+@app.on_message(filters.private & filters.command(["update", "gitpull"]) & filters.user(OWNER_ID))
 async def git_pull_handler(client: Client, message: Message):
     msg = await safe_reply(message, "⚡️ <i>Memperbarui bot via git...</i>")
     try:
@@ -557,10 +515,7 @@ async def git_pull_handler(client: Client, message: Message):
         )
         stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=30)
         output = stdout.decode().strip() or stderr.decode().strip()
-        await safe_edit(
-            msg,
-            f"⭐️ <b>Git Output:</b>\n<code>{output}</code>\n\n<i>Restarting...</i>",
-        )
+        await safe_edit(msg, f"⭐️ <b>Git Output:</b>\n<code>{output}</code>\n\n<i>Restarting...</i>")
         await asyncio.sleep(1.5)
         restart_process()
     except Exception as e:
@@ -576,7 +531,6 @@ async def restart_bot_handler(client: Client, message: Message):
 
 # ================= EKSEKUSI PENEMPELAN TOMBOL CHANNEL =================
 _PROCESSED_MSGS = set()
-
 
 @app.on_message(filters.channel)
 async def auto_button_channel(client: Client, message: Message):
@@ -602,7 +556,9 @@ async def auto_button_channel(client: Client, message: Message):
 
     try:
         await client.edit_message_reply_markup(
-            chat_id=cid, message_id=mid, reply_markup=markup
+            chat_id=cid,
+            message_id=mid,
+            reply_markup=markup
         )
         print(f"✅ [SUCCESS] Tombol berhasil dipasang di pesan ID {mid}!")
     except MessageNotModified:
@@ -610,12 +566,8 @@ async def auto_button_channel(client: Client, message: Message):
     except FloodWait as flood:
         await asyncio.sleep(flood.value)
         try:
-            await client.edit_message_reply_markup(
-                chat_id=cid, message_id=mid, reply_markup=markup
-            )
-            print(
-                f"✅ [SUCCESS] Tombol berhasil dipasang setelah FloodWait di ID {mid}!"
-            )
+            await client.edit_message_reply_markup(chat_id=cid, message_id=mid, reply_markup=markup)
+            print(f"✅ [SUCCESS] Tombol berhasil dipasang setelah FloodWait di ID {mid}!")
         except Exception:
             pass
     except Exception as err:
