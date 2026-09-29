@@ -9,32 +9,31 @@ from pyrogram_styled import Client, filters, idle
 from pyrogram_styled.enums import ParseMode
 from pyrogram_styled.errors import FloodWait, MessageNotModified
 from pyrogram_styled.helpers.helpers import ikb
-from pyrogram_styled.raw import functions
-from pyrogram_styled.types import (InlineKeyboardButton, InlineKeyboardMarkup,
-                                   Message)
+from pyrogram_styled.types import (
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    Message,
+)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-
 # ================= DAFTAR CUSTOM EMOJI & WARNA =================
 class AnimEmoji:
-    API: int = 5420315771991497307  # 🔥
-    BERLIAN: int = 5471952986970267163  # 💎
-    PETIR: int = 5431449001532594346  # ⚡️
-    ROKET: int = 5445284980978621387  # 🚀
-    TAUTAN: int = 5375129357373165375  # 🔗
-    CHAT: int = 5465300082628763143  # 💬
-
+    API: int = 5420315771991497307        # 🔥
+    BERLIAN: int = 5471952986970267163    # 💎
+    PETIR: int = 5431449001532594346      # ⚡️
+    ROKET: int = 5445284980978621387      # 🚀
+    TAUTAN: int = 5375129357373165375     # 🔗
+    CHAT: int = 5465300082628763143       # 💬
 
 AUTO_PRESETS = [
-    (AnimEmoji.API, "danger"),  # Merah kontras (seperti LIVE NYA DISINI)
-    (AnimEmoji.BERLIAN, "primary"),  # Putih / Biru kontras (seperti VVIP NYA DISINI)
+    (AnimEmoji.API, "danger"),     # Merah (LIVE NYA DISINI)
+    (AnimEmoji.BERLIAN, "primary"),# Putih/Biru (VVIP NYA DISINI)
     (AnimEmoji.PETIR, "success"),  # Hijau
     (AnimEmoji.ROKET, "primary"),
 ]
 
-
-# ================= KONFIGURASI ENV =================
+# ================= LOAD ENV =================
 def _load_env_file(path: str):
     if not os.path.exists(path):
         return
@@ -46,28 +45,36 @@ def _load_env_file(path: str):
             key, value = line.split("=", 1)
             os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
 
-
 _load_env_file(os.path.join(BASE_DIR, ".env"))
 
 API_ID = int(os.environ.get("API_ID", 0))
 API_HASH = os.environ.get("API_HASH", "")
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
 OWNER_ID = int(os.environ.get("OWNER_ID", "1492743978"))
+USER_SESSION = os.environ.get("USER_SESSION", "").strip()
 
 DATA_FILE = os.path.join(BASE_DIR, "channel_buttons.json")
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
+# Client BotFather untuk menu perintah admin
 app = Client(
-    "channel_button_manager",
+    "channel_button_bot",
     api_id=API_ID,
     api_hash=API_HASH,
     bot_token=BOT_TOKEN,
     parse_mode=ParseMode.HTML,
 )
 
+# Client Userbot Premium untuk eksekusi postingan ber-emoji di channel
+user_client = None
+if USER_SESSION:
+    user_client = Client(
+        "premium_userbot_worker",
+        api_id=API_ID,
+        api_hash=API_HASH,
+        session_string=USER_SESSION,
+    )
 
 # ================= DATABASE HANDLER =================
 def get_all_data() -> dict:
@@ -79,25 +86,16 @@ def get_all_data() -> dict:
     except Exception:
         return {}
 
-
 def save_all_data(data: dict):
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=4, ensure_ascii=False)
-
 
 def get_channel_grid(chat_id: int):
     data = get_all_data()
     raw = str(chat_id)
     clean = raw.replace("-100", "").replace("-", "")
-    return (
-        data.get(raw)
-        or data.get(f"-100{clean}")
-        or data.get(f"-{clean}")
-        or data.get(clean)
-    )
+    return data.get(raw) or data.get(f"-100{clean}") or data.get(f"-{clean}") or data.get(clean)
 
-
-# ================= KEYBOARD BUILDER =================
 def build_styled_markup(grid: list) -> InlineKeyboardMarkup:
     styled_rows = []
     plain_rows = []
@@ -123,20 +121,7 @@ def build_styled_markup(grid: list) -> InlineKeyboardMarkup:
     except Exception:
         return InlineKeyboardMarkup(plain_rows)
 
-
-def build_preview_markup(grid: list) -> InlineKeyboardMarkup:
-    rows = []
-    for r_idx, row in enumerate(grid):
-        btn_row = []
-        for c_idx, item in enumerate(row):
-            text = item.get("text", "").strip()
-            url = item.get("url", "").strip()
-            btn_row.append(InlineKeyboardButton(text=text, url=url))
-        rows.append(btn_row)
-    return InlineKeyboardMarkup(rows)
-
-
-# ================= COMMAND /SETBUTTON =================
+# ================= COMMAND /SETBUTTON VIA BOT =================
 @app.on_message(filters.private & filters.command("setbutton") & filters.user(OWNER_ID))
 async def set_button_cmd(client: Client, message: Message):
     lines = [line.strip() for line in message.text.splitlines() if line.strip()]
@@ -162,9 +147,12 @@ async def set_button_cmd(client: Client, message: Message):
                     url = "https://" + url
 
                 preset = AUTO_PRESETS[(r_idx + c_idx) % len(AUTO_PRESETS)]
-                row.append(
-                    {"text": txt, "url": url, "emoji_id": preset[0], "style": preset[1]}
-                )
+                row.append({
+                    "text": txt,
+                    "url": url,
+                    "emoji_id": preset[0],
+                    "style": preset[1]
+                })
         if row:
             grid.append(row)
 
@@ -179,9 +167,8 @@ async def set_button_cmd(client: Client, message: Message):
     await message.reply(
         f"✅ <b>Tombol Berhasil Disimpan!</b>\n"
         f"Channel: <code>{chat_key}</code>\n\nPratinjau:",
-        reply_markup=markup,
+        reply_markup=markup
     )
-
 
 @app.on_message(filters.private & filters.command("cekbutton") & filters.user(OWNER_ID))
 async def cek_button_cmd(client: Client, message: Message):
@@ -192,15 +179,10 @@ async def cek_button_cmd(client: Client, message: Message):
     ch_key = args[1].strip()
     grid = get_channel_grid(int(ch_key)) if ch_key.lstrip("-").isdigit() else None
     if not grid:
-        return await message.reply(
-            f"ℹ️ Belum ada tombol untuk channel <code>{ch_key}</code>."
-        )
+        return await message.reply(f"ℹ️ Belum ada tombol untuk channel <code>{ch_key}</code>.")
 
-    await message.reply(
-        f"💎 <b>Tombol aktif channel</b> <code>{ch_key}</code>:",
-        reply_markup=build_preview_markup(grid),
-    )
-
+    markup = build_styled_markup(grid)
+    await message.reply(f"💎 <b>Tombol aktif channel</b> <code>{ch_key}</code>:", reply_markup=markup)
 
 @app.on_message(filters.private & filters.command("delbutton") & filters.user(OWNER_ID))
 async def del_button_cmd(client: Client, message: Message):
@@ -217,15 +199,11 @@ async def del_button_cmd(client: Client, message: Message):
     else:
         await message.reply(f"⚠️ Channel <code>{ch_id}</code> tidak ditemukan.")
 
-
 # ================= GIT UPDATE & RESTART =================
 def restart_process():
     os.execl(sys.executable, sys.executable, *sys.argv)
 
-
-@app.on_message(
-    filters.private & filters.command(["update", "gitpull"]) & filters.user(OWNER_ID)
-)
+@app.on_message(filters.private & filters.command(["update", "gitpull"]) & filters.user(OWNER_ID))
 async def git_pull_cmd(client: Client, message: Message):
     msg = await message.reply("⚡ <i>Menarik pembaruan dari Git...</i>")
     try:
@@ -237,14 +215,11 @@ async def git_pull_cmd(client: Client, message: Message):
         )
         stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=30)
         output = stdout.decode().strip() or stderr.decode().strip()
-        await msg.edit(
-            f"⭐️ <b>Git Output:</b>\n<code>{output}</code>\n\n<i>Restarting...</i>"
-        )
+        await msg.edit(f"⭐️ <b>Git Output:</b>\n<code>{output}</code>\n\n<i>Restarting...</i>")
         await asyncio.sleep(1.5)
         restart_process()
     except Exception as e:
         await msg.edit(f"❌ Gagal update: <code>{e}</code>")
-
 
 @app.on_message(filters.private & filters.command("restart") & filters.user(OWNER_ID))
 async def restart_cmd(client: Client, message: Message):
@@ -252,81 +227,71 @@ async def restart_cmd(client: Client, message: Message):
     await asyncio.sleep(1)
     restart_process()
 
+# ================= USERBOT WORKER: AUTO-REPLACE POSTINGAN CHANNEL =================
+_SENT_BY_USERBOT = set()
 
-# ================= PENEMPELAN TOMBOL CHANNEL =================
-_PROCESSED_MSGS = set()
-
-
-@app.on_message(filters.channel)
-async def auto_channel_post_handler(client: Client, message: Message):
-    if not message or getattr(message, "empty", False) or message.service:
+def setup_userbot_worker():
+    if not user_client:
         return
 
-    cid = message.chat.id
-    mid = message.id
-    key_event = f"{cid}_{mid}"
+    @user_client.on_message(filters.channel)
+    async def userbot_channel_replacer(client: Client, message: Message):
+        if not message or getattr(message, "empty", False) or message.service:
+            return
 
-    if key_event in _PROCESSED_MSGS:
-        return
-    _PROCESSED_MSGS.add(key_event)
+        cid = message.chat.id
+        mid = message.id
 
-    grid = get_channel_grid(cid)
-    if not grid:
-        return
+        # Cegah looping tak hingga dari pesan yang diposting oleh userbot sendiri
+        if mid in _SENT_BY_USERBOT:
+            return
 
-    print(f"\n[EVENT] Postingan terdeteksi! Channel: {cid} | Msg ID: {mid}")
-    await asyncio.sleep(0.5)
+        grid = get_channel_grid(cid)
+        if not grid:
+            return
 
-    styled_markup = build_styled_markup(grid)
+        print(f"\n[USERBOT] Mendeteksi postingan baru di channel {cid} (ID: {mid})")
+        styled_markup = build_styled_markup(grid)
 
-    try:
-        peer = await client.resolve_peer(cid)
-        # Mengonversi styled markup resmi langsung ke struktur biner MTProto
-        raw_reply_markup = await styled_markup.write(client)
-
-        await client.invoke(
-            functions.messages.EditMessage(
-                peer=peer, id=mid, reply_markup=raw_reply_markup
-            )
-        )
-        print(
-            f"🔥 [SUCCESS] Tombol Berwarna & Emoji Berhasil Dipasang di Pesan ID {mid}!"
-        )
-    except FloodWait as flood:
-        await asyncio.sleep(flood.value)
         try:
-            peer = await client.resolve_peer(cid)
-            raw_reply_markup = await styled_markup.write(client)
-            await client.invoke(
-                functions.messages.EditMessage(
-                    peer=peer, id=mid, reply_markup=raw_reply_markup
-                )
+            # 1. Userbot Premium memposting ulang pesan bersama tombol & custom emoji bergerak
+            new_msg = await message.copy(
+                chat_id=cid,
+                reply_markup=styled_markup
             )
-            print(
-                f"🔥 [SUCCESS] Tombol Berhasil Dipasang setelah FloodWait di ID {mid}!"
-            )
-        except Exception as retry_err:
-            print(f"❌ Gagal pasang setelah FloodWait: {retry_err}")
-    except MessageNotModified:
-        pass
-    except Exception as e:
-        print(f"⚠️ Raw EditMessage gagal ({e}), beralih ke fallback edit...")
-        try:
-            await client.edit_message_reply_markup(
-                chat_id=cid, message_id=mid, reply_markup=styled_markup
-            )
-            print(f"✅ Tombol dipasang via fallback di ID {mid}")
-        except Exception as err:
-            print(f"❌ Fallback gagal: {err}")
+            _SENT_BY_USERBOT.add(new_msg.id)
+            print(f"🔥 [USERBOT SUCCESS] Postingan baru berhasil terbit dengan Emoji Bergerak di ID {new_msg.id}!")
 
+            # 2. Hapus pesan lama yang tadi diposting manual agar channel tetap rapi
+            await message.delete()
+            print(f"🧹 Pesan mentah ID {mid} berhasil dihapus.")
 
-# ================= MAIN RUNNER =================
+        except FloodWait as flood:
+            await asyncio.sleep(flood.value)
+            try:
+                new_msg = await message.copy(chat_id=cid, reply_markup=styled_markup)
+                _SENT_BY_USERBOT.add(new_msg.id)
+                await message.delete()
+            except Exception:
+                pass
+        except Exception as e:
+            print(f"❌ Userbot gagal memproses replace: {e}")
+
+# ================= RUNNER =================
 async def main():
     await app.start()
-    logging.info("Bot Channel Button Manager Aktif.")
-    await idle()
-    await app.stop()
+    logging.info("BotFather Admin Listener Aktif.")
 
+    if user_client:
+        await user_client.start()
+        setup_userbot_worker()
+        logging.info("Userbot Premium Worker Aktif & Siap Memasang Tombol Bergerak!")
+
+    await idle()
+
+    if user_client:
+        await user_client.stop()
+    await app.stop()
 
 if __name__ == "__main__":
     app.run(main())
