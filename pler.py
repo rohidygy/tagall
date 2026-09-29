@@ -149,11 +149,15 @@ async def set_button_cmd(client: Client, message: Message):
         },
     )
     if not res.get("ok"):
-        await message.reply(f"❌ Gagal pratinjau: <code>{res.get('description')}</code>")
+        await message.reply(
+            f"❌ Gagal pratinjau: <code>{res.get('description')}</code>"
+        )
 
 
 # ================= AMBIL EMOJI ID =================
-@app.on_message(filters.private & filters.user(OWNER_ID) & ~filters.command(["setbutton", "post"]))
+@app.on_message(
+    filters.private & filters.user(OWNER_ID) & ~filters.command(["setbutton", "post"])
+)
 async def get_emoji_id(client: Client, message: Message):
     ents = message.entities or message.caption_entities or []
     ids = [e.custom_emoji_id for e in ents if getattr(e, "custom_emoji_id", None)]
