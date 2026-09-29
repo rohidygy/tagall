@@ -6,25 +6,128 @@ import os
 import re
 import sys
 import urllib.parse
-from typing import Optional, Tuple
+from collections.abc import Awaitable, Callable
+from typing import Any, Optional, Tuple, TypeVar
 
 import aiohttp
-from pyrogram import Client, filters
-from pyrogram.enums import ChatType, ParseMode
-from pyrogram.errors import FloodWait, MessageNotModified
-from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
+from pyrogram_styled import Client, filters
+from pyrogram_styled.enums import ChatType, ParseMode
+from pyrogram_styled.errors import DocumentInvalid, FloodWait, MessageNotModified
+from pyrogram_styled.helpers.helpers import clean_emoji, ikb
+from pyrogram_styled.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+T = TypeVar("T")
+
+# ================= DAFTAR CUSTOM ANIMATED EMOJI =================
+class AnimEmoji:
+    TANGAN: int = 5472055112702629499     # 👋
+    PETIR: int = 5431449001532594346      # ⚡️
+    BERLIAN: int = 5471952986970267163    # 💎
+    KILAU: int = 5472164874886846699      # ✨
+    API: int = 5420315771991497307        # 🔥
+    MAHKOTA: int = 5467406098367521267    # 👑
+    CENTANG: int = 5427009714745517609    # ✅
+    SILANG: int = 5465665476971471368     # ❌
+    BINTANG: int = 5435957248314579621    # ⭐️
+    ROKET: int = 5445284980978621387      # 🚀
+    JAM_PASIR: int = 5451732530048802485  # ⏳
+    LAMPU: int = 5472146462362048818      # 💡
+    PESTA: int = 5436040291507247633      # 🎉
+    CHAT: int = 5465300082628763143       # 💬
+    MEGAPHONE: int = 5469903029144657419  # 📣
+    GRAFIK: int = 5431577498364158238     # 📊
+    TAUTAN: int = 5375129357373165375     # 🔗
+    MEDALI_EMAS: int = 5280735858926822987  # 🥇
+    MATA: int = 5424885441100782420       # 👀
+    DILARANG: int = 5240241223632954241   # 🚫
+    PERINGATAN: int = 5447644880824181073 # ⚠️
+    SAMPAH: int = 5445267414562389170     # 🗑
+    SURAT: int = 5253742260054409879      # ✉️
+    INFO: int = 5334544901428229844       # ℹ️
+
+
+def resolve_emoji_id(val: Any) -> Optional[int]:
+    if not val:
+        return None
+    val_str = str(val).strip().upper()
+    if hasattr(AnimEmoji, val_str):
+        return int(getattr(AnimEmoji, val_str))
+    if val_str.isdigit():
+        return int(val_str)
+    return None
+
+
+# ================= PARSER FORMAT & STYLED PIPELINE =================
+def format_to_html(text: str | None) -> str:
+    if not text:
+        return ""
+    t = text
+    t = re.sub(r"!?\[([^\]]*?)\]\(tg://emoji\?id=(\d+)\)", r"<emoji id=\2>\1</emoji>", t)
+    t = re.sub(r'<tg-emoji\s+emoji-id=[\'"]?(\d+)[\'"]?>(.*?)</tg-emoji>', r"<emoji id=\1>\2</emoji>", t, flags=re.IGNORECASE | re.DOTALL)
+    t = re.sub(r'<emoji\s+id=[\'"]?(\d+)[\'"]?\s*>(.*?)</emoji>', r"<emoji id=\1>\2</emoji>", t, flags=re.IGNORECASE | re.DOTALL)
+    t = re.sub(r"<emoji\s+id=(\d+)>!+(.*?)</emoji>", r"<emoji id=\1>\2</emoji>", t)
+    t = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", t, flags=re.DOTALL)
+    t = re.sub(r"__(.+?)__", r"<i>\1</i>", t, flags=re.DOTALL)
+    t = re.sub(r"(?<!\w)_([^_]+?)_(?!\w)", r"<i>\1</i>", t, flags=re.DOTALL)
+    t = re.sub(r"`([^`]+?)`", r"<code>\1</code>", t)
+    t = re.sub(r"\[([^\]]+?)\]\(((?:https?://|tg://)[^\)]+)\)", r'<a href="\2">\1</a>', t)
+    return t
+
+
+def strip_custom_emojis(text: str | None) -> str:
+    if not text:
+        return ""
+    cleaned = clean_emoji(text)
+    if cleaned:
+        return re.sub(r'<tg-emoji\s+emoji-id=[\'"]?\d+[\'"]?>(.*?)</tg-emoji>', r"\1", cleaned)
+    return ""
+
+
+def _is_custom_emoji_rejection(err: Exception) -> bool:
+    if isinstance(err, DocumentInvalid):
+        return True
+    err_str = str(err).upper()
+    return "DOCUMENT_INVALID" in err_str or "ENTITY_BOUNDS_INVALID" in err_str
+
+
+async def _execute_styled_pipeline(
+    styled_callable: Callable[[], Awaitable[T]],
+    plain_callable: Callable[[], Awaitable[T]],
+) -> T:
+    try:
+        return await styled_callable()
+    except FloodWait as flood:
+        await asyncio.sleep(flood.value)
+        try:
+            return await styled_callable()
+        except Exception as retry_err:
+            if _is_custom_emoji_rejection(retry_err):
+                return await plain_callable()
+            raise
+    except Exception as exc:
+        if _is_custom_emoji_rejection(exc):
+            return await plain_callable()
+        raise
+
+
+async def safe_reply(m: Message, text: str, **kwargs: Any) -> Message:
+    html_text = format_to_html(text)
+    return await _execute_styled_pipeline(
+        lambda: m.reply(html_text, **kwargs),
+        lambda: m.reply(strip_custom_emojis(html_text), **kwargs),
+    )
+
+
+async def safe_edit(msg: Message, text: str, **kwargs: Any) -> Message:
+    html_text = format_to_html(text)
+    return await _execute_styled_pipeline(
+        lambda: msg.edit(html_text, **kwargs),
+        lambda: msg.edit(strip_custom_emojis(html_text), **kwargs),
+    )
 
 
 # ================= KONFIGURASI BOT =================
-# Rahasia (API_HASH, BOT_TOKEN, dst.) TIDAK ditulis di kode lagi.
-# Isi lewat environment variable atau file `.env` di folder yang sama:
-#   API_ID=123456
-#   API_HASH=xxxxxxxx
-#   BOT_TOKEN=123:ABC
-#   OWNER_ID=1492743978        (opsional)
-#   IMGBB_KEY=xxxxxxxx         (opsional, agar foto tersimpan PERMANEN & lebih stabil)
 def _load_env_file(path: str):
     if not os.path.exists(path):
         return
@@ -52,7 +155,7 @@ def _require_env(name: str) -> str:
 API_ID = int(_require_env("API_ID"))
 API_HASH = _require_env("API_HASH")
 BOT_TOKEN = _require_env("BOT_TOKEN")
-OWNER_ID = int(os.environ.get("OWNER_ID", "1492743978"))  # Super Admin / Pemilik Utama
+OWNER_ID = int(os.environ.get("OWNER_ID", "1492743978"))
 IMGBB_KEY = os.environ.get("IMGBB_KEY", "")
 
 BASE_WEBAPP_URL = "https://rohidygy.github.io/tagall/"
@@ -75,12 +178,10 @@ app = Client(
 
 
 def esc(value) -> str:
-    """Escape teks dinamis agar aman dipakai di pesan HTML."""
     return html.escape(str(value))
 
 
 def command_text(message: Message) -> str:
-    """Teks perintah, baik dari pesan biasa maupun caption foto."""
     return str(message.text or message.caption or "")
 
 
@@ -97,8 +198,6 @@ def _read_json(path: str, default):
 
 
 def _write_json(path: str, data):
-    # Tulis ke file sementara lalu ganti (atomic) supaya data tidak rusak
-    # kalau bot mati di tengah proses menyimpan.
     tmp_path = path + ".tmp"
     with open(tmp_path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=4, ensure_ascii=False)
@@ -133,13 +232,13 @@ def check_is_admin(_, __, message: Message):
 is_bot_admin = filters.create(check_is_admin)
 
 
-# ================= HELPER URL & CHANNEL =================
+# ================= HELPER URL & KEYBOARD BUILDER =================
 _SCHEME_RE = re.compile(r"^[a-zA-Z][a-zA-Z0-9+.\-]*://")
 
 
 def clean_url(raw_url: str) -> str:
     url = raw_url.strip().replace(" ", "")
-    if not _SCHEME_RE.match(url):  # skema lain (mis. tg://) dibiarkan apa adanya
+    if not _SCHEME_RE.match(url):
         url = "https://" + url
     return url
 
@@ -149,7 +248,6 @@ def is_valid_url(url: str) -> bool:
 
 
 def parse_channel_id(raw: str) -> Optional[str]:
-    """Pastikan ID channel berupa angka, kembalikan dalam bentuk string ternormalisasi."""
     try:
         return str(int(raw.strip()))
     except (ValueError, AttributeError):
@@ -157,12 +255,35 @@ def parse_channel_id(raw: str) -> Optional[str]:
 
 
 def build_markup(grid: list) -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(
-        [
-            [InlineKeyboardButton(item["text"], url=item["url"]) for item in row]
-            for row in grid
-        ]
-    )
+    # 1. Coba susun pakai custom animated emoji ikb()
+    has_emoji = False
+    styled_rows = []
+    plain_rows = []
+
+    for row in grid:
+        s_row = []
+        p_row = []
+        for item in row:
+            text = item.get("text", "")
+            url = item.get("url", "")
+            emoji_id = item.get("emoji_id")
+            
+            p_row.append(InlineKeyboardButton(text=text, url=url))
+            if emoji_id:
+                has_emoji = True
+                s_row.append((f" {text} ", url, int(emoji_id), "primary"))
+            else:
+                s_row.append((text, url))
+        styled_rows.append(s_row)
+        plain_rows.append(p_row)
+
+    if has_emoji:
+        try:
+            return ikb(styled_rows)
+        except Exception as exc:
+            logging.warning("Fallback ke keyboard standar karena ikb gagal: %s", exc)
+
+    return InlineKeyboardMarkup(plain_rows)
 
 
 def get_channel_markup(chat_id: int):
@@ -198,20 +319,23 @@ def payload_from_grid(grid) -> Optional[dict]:
 
 
 def webapp_grid(payload: dict) -> list:
-    return [[{"text": WEBAPP_BUTTON_TEXT, "url": build_webapp_link(payload)}]]
+    return [[{
+        "text": WEBAPP_BUTTON_TEXT,
+        "url": build_webapp_link(payload),
+        "emoji_id": AnimEmoji.KILAU
+    }]]
 
 
 async def save_after_preview(
     message: Message, chat_key: str, grid: list, text: str
 ) -> bool:
-    """Kirim pratinjau dulu; hanya simpan kalau Telegram menerima tombolnya.
-    (Sebelumnya tombol yang ditolak Telegram tetap tersimpan dan merusak auto-attach.)
-    """
     try:
-        await message.reply_text(text, reply_markup=build_markup(grid))
+        markup = build_markup(grid)
+        await safe_reply(message, text, reply_markup=markup)
     except Exception as e:
-        await message.reply_text(
-            "⚠️ <b>Tidak disimpan</b> — Telegram menolak tombol ini:\n"
+        await safe_reply(
+            message,
+            f"<emoji id={AnimEmoji.PERINGATAN}>⚠️️</emoji> <b>Tidak disimpan</b> — Telegram menolak tombol ini:\n"
             f"<code>{esc(e)}</code>\n\n"
             "Periksa kembali URL yang dimasukkan."
         )
@@ -267,7 +391,6 @@ async def _upload_tmpfiles(session, content: bytes, filename: str) -> str:
 
 
 async def upload_image(file_path: str) -> Tuple[str, bool]:
-    """Upload gambar. Return (direct_url, sementara?)."""
     with open(file_path, "rb") as f:
         content = f.read()
     filename = os.path.basename(file_path)
@@ -276,7 +399,7 @@ async def upload_image(file_path: str) -> Tuple[str, bool]:
     if IMGBB_KEY:
         providers.append(("ImgBB", _upload_imgbb, False))
     providers.append(("Catbox", _upload_catbox, False))
-    providers.append(("tmpfiles", _upload_tmpfiles, True))  # file hilang ±60 menit
+    providers.append(("tmpfiles", _upload_tmpfiles, True))
 
     errors = []
     timeout = aiohttp.ClientTimeout(total=60)
@@ -302,7 +425,6 @@ def is_image_message(msg: Optional[Message]) -> bool:
 
 
 def find_image_message(message: Message) -> Optional[Message]:
-    """Foto bisa dikirim bersama caption perintah, atau perintah membalas sebuah foto."""
     if is_image_message(message):
         return message
     if is_image_message(message.reply_to_message):
@@ -321,7 +443,7 @@ async def upload_message_image(source: Message) -> Tuple[str, bool]:
 
 
 TEMP_WARNING = (
-    "\n\n⚠️ <i>Foto ini diunggah ke server sementara (tmpfiles) dan akan hilang "
+    f"\n\n<emoji id={AnimEmoji.PERINGATAN}>⚠️</emoji> <i>Foto ini diunggah ke server sementara (tmpfiles) dan akan hilang "
     "sekitar 60 menit. Isi <code>IMGBB_KEY</code> di file .env agar foto permanen.</i>"
 )
 
@@ -333,32 +455,34 @@ async def start_handler(client: Client, message: Message):
     admins = get_admins()
 
     if user_id not in admins:
-        return await message.reply_text(
-            "👋 Bot ini aktif untuk mengelola tombol channel."
+        return await safe_reply(
+            message,
+            f"<emoji id={AnimEmoji.TANGAN}>👋</emoji> <b>Bot ini aktif untuk mengelola tombol channel.</b>"
         )
 
     is_owner = user_id == OWNER_ID
-    role_text = "👑 <b>Owner Utama</b>" if is_owner else "🛠 <b>Admin Terdaftar</b>"
+    role_text = f"<emoji id={AnimEmoji.MAHKOTA}>👑</emoji> <b>Owner Utama</b>" if is_owner else f"<emoji id={AnimEmoji.MEDALI_EMAS}>🥇</emoji> <b>Admin Terdaftar</b>"
 
     text = (
-        f"Halo <b>{esc(message.from_user.first_name)}</b>! ({role_text})\n\n"
-        "<b>Perintah Pengaturan Tombol:</b>\n"
-        "• <code>/setbutton &lt;ID_CH&gt;</code> → Tombol link biasa di channel\n"
+        f"<emoji id={AnimEmoji.TANGAN}>👋</emoji> Halo <b>{esc(message.from_user.first_name)}</b>! ({role_text})\n\n"
+        f"<emoji id={AnimEmoji.PETIR}>⚡️</emoji> <b>Perintah Pengaturan Tombol:</b>\n"
+        "• <code>/setbutton &lt;ID_CH&gt;</code> → Tombol link (Bisa tambah Animated Emoji)\n"
         "• <code>/setweb &lt;ID_CH&gt; [JUDUL | SUBTITLE | BADGE | BG_URL]</code> → Mini App WebApp\n"
-        "• Kirim <b>foto</b> dengan caption <code>/setweb ...</code> (atau balas foto dengan "
-        "<code>/setweb ...</code>) → foto otomatis jadi background\n"
+        "• Kirim <b>foto</b> dengan caption <code>/setweb ...</code> (atau balas foto) → foto otomatis jadi background\n"
         "• <code>/setfoto &lt;ID_CH&gt;</code> + foto → Ganti foto background WebApp yang sudah ada\n"
         "• <code>/delfoto &lt;ID_CH&gt;</code> → Hapus foto background WebApp\n"
         "• <code>/setimg</code> + foto → Upload foto jadi link saja\n"
         "• <code>/cekbutton &lt;ID_CH&gt;</code> → Cek tombol channel\n"
         "• <code>/delbutton &lt;ID_CH&gt;</code> → Hapus tombol channel\n"
         "• <code>/listchannel</code> → Daftar channel aktif\n\n"
-        "💡 <i>Teruskan (forward) pesan dari channel ke bot untuk mendapatkan ID.</i>"
+        f"<emoji id={AnimEmoji.LAMPU}>💡</emoji> <b>Format Emoji Bergerak di Tombol:</b>\n"
+        "<code>Judul - https://link.com - ROKET</code> atau <code>- &lt;ID_EMOJI&gt;</code>\n"
+        "<i>(Daftar emoji: PETIR, BERLIAN, API, MAHKOTA, ROKET, KILAU, TAUTAN, CENTANG, dll)</i>"
     )
 
     if is_owner:
         text += (
-            "\n\n<b>Perintah Khusus Owner:</b>\n"
+            f"\n\n<emoji id={AnimEmoji.MAHKOTA}>👑</emoji> <b>Perintah Khusus Owner:</b>\n"
             "• <code>/update</code> → Git pull &amp; otomatis restart\n"
             "• <code>/restart</code> → Restart bot langsung dari chat\n"
             "• <code>/addadmin &lt;USER_ID&gt;</code> → Tambah hak akses admin\n"
@@ -366,7 +490,7 @@ async def start_handler(client: Client, message: Message):
             "• <code>/listadmin</code> → Daftar semua admin"
         )
 
-    await message.reply_text(text)
+    await safe_reply(message, text)
 
 
 # ================= UPLOAD GAMBAR (/setimg) =================
@@ -374,29 +498,31 @@ async def start_handler(client: Client, message: Message):
 async def set_image_handler(client: Client, message: Message):
     image_msg = find_image_message(message)
     if not image_msg:
-        return await message.reply_text(
-            "⚠️ <b>Cara Penggunaan:</b>\n"
+        return await safe_reply(
+            message,
+            f"<emoji id={AnimEmoji.PERINGATAN}>⚠️</emoji> <b>Cara Penggunaan:</b>\n"
             "• Kirim foto dengan caption <code>/setimg</code>, atau\n"
             "• Balas (reply) foto dengan <code>/setimg</code>."
         )
 
-    status_msg = await message.reply_text(
-        "⏳ <i>Sedang memproses dan mengunggah gambar...</i>"
+    status_msg = await safe_reply(
+        message,
+        f"<emoji id={AnimEmoji.JAM_PASIR}>⏳</emoji> <i>Sedang memproses dan mengunggah gambar...</i>"
     )
     try:
         direct_url, temporary = await upload_message_image(image_msg)
         text = (
-            "✅ <b>Gambar Berhasil Diunggah!</b>\n\n"
-            f"🔗 <b>Direct URL:</b>\n<code>{esc(direct_url)}</code>\n\n"
-            "💡 <b>Format Pakai di /setweb:</b>\n"
+            f"<emoji id={AnimEmoji.CENTANG}>✅</emoji> <b>Gambar Berhasil Diunggah!</b>\n\n"
+            f"<emoji id={AnimEmoji.TAUTAN}>🔗</emoji> <b>Direct URL:</b>\n<code>{esc(direct_url)}</code>\n\n"
+            f"<emoji id={AnimEmoji.LAMPU}>💡</emoji> <b>Format Pakai di /setweb:</b>\n"
             f"<code>/setweb &lt;ID_CH&gt; [JUDUL | SUBTITLE | BADGE | {esc(direct_url)}]</code>\n\n"
             "Atau lebih mudah: kirim foto dengan caption <code>/setweb ...</code> / <code>/setfoto ...</code>."
         )
         if temporary:
             text += TEMP_WARNING
-        await status_msg.edit_text(text)
+        await safe_edit(status_msg, text)
     except Exception as e:
-        await status_msg.edit_text(f"❌ Gagal memproses gambar: <code>{esc(e)}</code>")
+        await safe_edit(status_msg, f"<emoji id={AnimEmoji.SILANG}>❌</emoji> Gagal memproses gambar: <code>{esc(e)}</code>")
 
 
 # ================= SET FOTO BACKGROUND WEBAPP (/setfoto, /delfoto) =================
@@ -406,39 +532,39 @@ async def set_photo_handler(client: Client, message: Message):
     image_msg = find_image_message(message)
 
     if len(parts) < 2 or not image_msg:
-        return await message.reply_text(
-            "⚠️ <b>Cara Penggunaan /setfoto:</b>\n"
+        return await safe_reply(
+            message,
+            f"<emoji id={AnimEmoji.PERINGATAN}>⚠️</emoji> <b>Cara Penggunaan /setfoto:</b>\n"
             "• Kirim foto dengan caption <code>/setfoto -100xxxxxxxxxx</code>, atau\n"
             "• Balas (reply) foto dengan <code>/setfoto -100xxxxxxxxxx</code>\n\n"
-            "<i>Mengganti foto background pada tampilan WebApp channel yang sudah dibuat "
-            "dengan /setweb.</i>"
+            "<i>Mengganti foto background pada tampilan WebApp channel yang sudah dibuat dengan /setweb.</i>"
         )
 
     chat_key = parse_channel_id(parts[1])
     if chat_key is None:
-        return await message.reply_text(
-            "❌ ID channel harus berupa angka, contoh: <code>-1001234567890</code>"
+        return await safe_reply(
+            message,
+            f"<emoji id={AnimEmoji.SILANG}>❌</emoji> ID channel harus berupa angka, contoh: <code>-1001234567890</code>"
         )
 
     payload = payload_from_grid(get_all_data().get(chat_key))
     if payload is None:
-        return await message.reply_text(
-            f"❌ Channel <code>{chat_key}</code> belum punya tampilan WebApp.\n"
+        return await safe_reply(
+            message,
+            f"<emoji id={AnimEmoji.SILANG}>❌</emoji> Channel <code>{chat_key}</code> belum punya tampilan WebApp.\n"
             "Buat dulu dengan <code>/setweb</code> (boleh sekalian sertakan foto)."
         )
 
-    status_msg = await message.reply_text("⏳ <i>Mengunggah foto...</i>")
+    status_msg = await safe_reply(message, f"<emoji id={AnimEmoji.JAM_PASIR}>⏳</emoji> <i>Mengunggah foto...</i>")
     try:
         bg_url, temporary = await upload_message_image(image_msg)
     except Exception as e:
-        return await status_msg.edit_text(
-            f"❌ Foto gagal diunggah: <code>{esc(e)}</code>"
-        )
+        return await safe_edit(status_msg, f"<emoji id={AnimEmoji.SILANG}>❌</emoji> Foto gagal diunggah: <code>{esc(e)}</code>")
     await status_msg.delete()
 
     payload["background"] = bg_url
     text = (
-        "✅ <b>Foto Background Berhasil Diganti!</b>\n\n"
+        f"<emoji id={AnimEmoji.CENTANG}>✅</emoji> <b>Foto Background Berhasil Diganti!</b>\n\n"
         f"• <b>Channel:</b> <code>{chat_key}</code>\n"
         f"• <b>Background:</b> <code>{esc(bg_url)}</code>\n\n"
         "Pratinjau tombol channel:"
@@ -452,26 +578,22 @@ async def set_photo_handler(client: Client, message: Message):
 async def delete_photo_handler(client: Client, message: Message):
     parts = command_text(message).split()
     if len(parts) < 2:
-        return await message.reply_text(
-            "Ketik: <code>/delfoto &lt;ID_CHANNEL&gt;</code>"
-        )
+        return await safe_reply(message, "Ketik: <code>/delfoto &lt;ID_CHANNEL&gt;</code>")
 
     chat_key = parse_channel_id(parts[1])
     if chat_key is None:
-        return await message.reply_text("❌ ID channel harus berupa angka.")
+        return await safe_reply(message, f"<emoji id={AnimEmoji.SILANG}>❌</emoji> ID channel harus berupa angka.")
 
     payload = payload_from_grid(get_all_data().get(chat_key))
     if payload is None:
-        return await message.reply_text(
-            f"❌ Channel <code>{chat_key}</code> belum punya tampilan WebApp."
-        )
+        return await safe_reply(message, f"<emoji id={AnimEmoji.SILANG}>❌</emoji> Channel <code>{chat_key}</code> belum punya tampilan WebApp.")
 
     payload["background"] = ""
     await save_after_preview(
         message,
         chat_key,
         webapp_grid(payload),
-        f"🗑️ Foto background channel <code>{chat_key}</code> dihapus (kembali ke bawaan).",
+        f"<emoji id={AnimEmoji.SAMPAH}>🗑</emoji> Foto background channel <code>{chat_key}</code> dihapus (kembali ke bawaan).",
     )
 
 
@@ -482,9 +604,8 @@ def restart_process():
 
 @app.on_message(filters.private & filters.command("update") & filters.user(OWNER_ID))
 async def git_pull_handler(client: Client, message: Message):
-    msg = await message.reply_text("🔄 <b>Menjalankan git pull...</b>")
+    msg = await safe_reply(message, f"<emoji id={AnimEmoji.PETIR}>⚡️</emoji> <b>Menjalankan git pull...</b>")
     try:
-        # Async supaya bot tidak "membeku" selama git pull berjalan.
         proc = await asyncio.create_subprocess_exec(
             "git",
             "pull",
@@ -496,7 +617,7 @@ async def git_pull_handler(client: Client, message: Message):
             stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=30)
         except asyncio.TimeoutError:
             proc.kill()
-            return await msg.edit_text("❌ <b>git pull timeout (30 detik).</b>")
+            return await safe_edit(msg, f"<emoji id={AnimEmoji.SILANG}>❌</emoji> <b>git pull timeout (30 detik).</b>")
 
         output = (
             stdout.decode(errors="replace") + stderr.decode(errors="replace")
@@ -504,30 +625,30 @@ async def git_pull_handler(client: Client, message: Message):
         hasil = esc(output[-3000:]) if output else "Tidak ada perubahan."
 
         if proc.returncode != 0:
-            return await msg.edit_text(
-                f"❌ <b>git pull gagal:</b>\n<pre>{hasil}</pre>\n\nBot tidak di-restart."
+            return await safe_edit(
+                msg,
+                f"<emoji id={AnimEmoji.SILANG}>❌</emoji> <b>git pull gagal:</b>\n<pre>{hasil}</pre>\n\nBot tidak di-restart."
             )
 
-        await msg.edit_text(
-            f"📦 <b>Hasil Git Pull:</b>\n<pre>{hasil}</pre>\n\n♻️ <i>Memulai ulang bot...</i>"
+        await safe_edit(
+            msg,
+            f"<emoji id={AnimEmoji.BINTANG}>⭐️</emoji> <b>Hasil Git Pull:</b>\n<pre>{hasil}</pre>\n\n<emoji id={AnimEmoji.PETIR}>⚡️</emoji> <i>Memulai ulang bot...</i>"
         )
         await asyncio.sleep(1.5)
         restart_process()
     except Exception as e:
-        await msg.edit_text(f"❌ <b>Gagal update/restart:</b>\n<code>{esc(e)}</code>")
+        await safe_edit(msg, f"<emoji id={AnimEmoji.SILANG}>❌</emoji> <b>Gagal update/restart:</b>\n<code>{esc(e)}</code>")
 
 
 @app.on_message(filters.private & filters.command("restart") & filters.user(OWNER_ID))
 async def restart_bot_handler(client: Client, message: Message):
-    await message.reply_text("♻️ <b>Memulai ulang bot... Tunggu beberapa detik.</b>")
+    await safe_reply(message, f"<emoji id={AnimEmoji.PETIR}>⚡️</emoji> <b>Memulai ulang bot... Tunggu beberapa detik.</b>")
     await asyncio.sleep(1)
     restart_process()
 
 
 # ================= MANAJEMEN AKSES ADMIN (OWNER ONLY) =================
 def get_forward_info(message: Message):
-    """Return (chat_asal, user_asal). Kompatibel dengan Pyrogram lama & versi baru
-    yang memakai forward_origin."""
     origin = getattr(message, "forward_origin", None)
     if origin is not None:
         return getattr(origin, "chat", None), getattr(origin, "sender_user", None)
@@ -550,23 +671,26 @@ async def add_admin_handler(client: Client, message: Message):
             try:
                 target_id = int(parts[1])
             except ValueError:
-                return await message.reply_text("⚠️ User ID harus berupa angka.")
+                return await safe_reply(message, f"<emoji id={AnimEmoji.PERINGATAN}>⚠️</emoji> User ID harus berupa angka.")
 
     if not target_id:
-        return await message.reply_text(
-            "⚠️ Format: <code>/addadmin &lt;USER_ID&gt;</code>"
+        return await safe_reply(
+            message,
+            f"<emoji id={AnimEmoji.PERINGATAN}>⚠️</emoji> Format: <code>/addadmin &lt;USER_ID&gt;</code>"
         )
 
     admins = get_admins()
     if target_id in admins:
-        return await message.reply_text(
-            f"Pengguna <code>{target_id}</code> sudah menjadi admin."
+        return await safe_reply(
+            message,
+            f"<emoji id={AnimEmoji.INFO}>ℹ️</emoji> Pengguna <code>{target_id}</code> sudah menjadi admin."
         )
 
     admins.append(target_id)
     save_admins(admins)
-    await message.reply_text(
-        f"✅ User ID <code>{target_id}</code> berhasil diberi akses admin."
+    await safe_reply(
+        message,
+        f"<emoji id={AnimEmoji.CENTANG}>✅</emoji> User ID <code>{target_id}</code> berhasil diberi akses admin."
     )
 
 
@@ -574,40 +698,43 @@ async def add_admin_handler(client: Client, message: Message):
 async def del_admin_handler(client: Client, message: Message):
     parts = message.text.split()
     if len(parts) < 2:
-        return await message.reply_text(
-            "⚠️ Format: <code>/deladmin &lt;USER_ID&gt;</code>"
+        return await safe_reply(
+            message,
+            f"<emoji id={AnimEmoji.PERINGATAN}>⚠️</emoji> Format: <code>/deladmin &lt;USER_ID&gt;</code>"
         )
 
     try:
         target_id = int(parts[1])
     except ValueError:
-        return await message.reply_text("⚠️ User ID harus berupa angka.")
+        return await safe_reply(message, f"<emoji id={AnimEmoji.PERINGATAN}>⚠️</emoji> User ID harus berupa angka.")
 
     if target_id == OWNER_ID:
-        return await message.reply_text("❌ Owner utama tidak dapat dihapus.")
+        return await safe_reply(message, f"<emoji id={AnimEmoji.DILARANG}>🚫</emoji> Owner utama tidak dapat dihapus.")
 
     admins = get_admins()
     if target_id not in admins:
-        return await message.reply_text(
-            f"User ID <code>{target_id}</code> tidak ada di daftar admin."
+        return await safe_reply(
+            message,
+            f"<emoji id={AnimEmoji.PERINGATAN}>⚠️</emoji> User ID <code>{target_id}</code> tidak ada di daftar admin."
         )
 
     admins.remove(target_id)
     save_admins(admins)
-    await message.reply_text(
-        f"🗑️ Akses untuk <code>{target_id}</code> berhasil dicabut."
+    await safe_reply(
+        message,
+        f"<emoji id={AnimEmoji.SAMPAH}>🗑</emoji> Akses untuk <code>{target_id}</code> berhasil dicabut."
     )
 
 
 @app.on_message(filters.private & filters.command("listadmin") & filters.user(OWNER_ID))
 async def list_admin_handler(client: Client, message: Message):
-    text = "👥 <b>Daftar Admin Bot:</b>\n\n"
+    text = f"<emoji id={AnimEmoji.CHAT}>💬</emoji> <b>Daftar Admin Bot:</b>\n\n"
     for uid in get_admins():
         if uid == OWNER_ID:
-            text += f"• <code>{uid}</code> 👑 <i>(Owner)</i>\n"
+            text += f"• <code>{uid}</code> <emoji id={AnimEmoji.MAHKOTA}>👑</emoji> <i>(Owner)</i>\n"
         else:
-            text += f"• <code>{uid}</code> 🛠 <i>(Admin)</i>\n"
-    await message.reply_text(text)
+            text += f"• <code>{uid}</code> <emoji id={AnimEmoji.MEDALI_EMAS}>🥇</emoji> <i>(Admin)</i>\n"
+    await safe_reply(message, text)
 
 
 # ================= DETEKSI ID FORWARD =================
@@ -616,20 +743,22 @@ async def detect_forward(client: Client, message: Message):
     fwd_chat, fwd_user = get_forward_info(message)
 
     if fwd_chat and fwd_chat.type == ChatType.CHANNEL:
-        await message.reply_text(
-            "📢 <b>Channel Terdeteksi:</b>\n"
+        await safe_reply(
+            message,
+            f"<emoji id={AnimEmoji.MEGAPHONE}>📣</emoji> <b>Channel Terdeteksi:</b>\n"
             f"• Nama: <b>{esc(fwd_chat.title)}</b>\n"
             f"• ID: <code>{fwd_chat.id}</code>"
         )
     elif fwd_user:
-        await message.reply_text(
-            "👤 <b>Pengguna Terdeteksi:</b>\n"
+        await safe_reply(
+            message,
+            f"<emoji id={AnimEmoji.CHAT}>💬</emoji> <b>Pengguna Terdeteksi:</b>\n"
             f"• Nama: <b>{esc(fwd_user.first_name)}</b>\n"
             f"• ID: <code>{fwd_user.id}</code>"
         )
 
 
-# ================= ATUR TOMBOL BIASA (/setbutton) =================
+# ================= ATUR TOMBOL BIASA & EMOJI BERGERAK (/setbutton) =================
 @app.on_message(filters.private & filters.command("setbutton") & is_bot_admin)
 async def set_normal_buttons_handler(client: Client, message: Message):
     lines = [
@@ -638,43 +767,54 @@ async def set_normal_buttons_handler(client: Client, message: Message):
     first_line_parts = lines[0].split() if lines else []
 
     if len(first_line_parts) < 2 or len(lines) < 2:
-        return await message.reply_text(
-            "⚠️ <b>Format /setbutton:</b>\n\n"
+        return await safe_reply(
+            message,
+            f"<emoji id={AnimEmoji.PERINGATAN}>⚠️</emoji> <b>Format /setbutton (Mendukung Animated Emoji):</b>\n\n"
             "<code>/setbutton -100xxxxxxxxxx\n"
-            "🌐 Website - https://contoh.com\n"
-            "💬 Admin 1 - https://t.me/admin1 | 💬 Admin 2 - https://t.me/admin2\n"
-            "⚡ Join VIP - https://t.me/channel</code>"
+            "🌐 Website - https://contoh.com - TAUTAN\n"
+            "💬 Admin 1 - https://t.me/admin1 - CHAT | ⚡️ VIP - https://t.me/channel - PETIR\n"
+            "🔥 Daftar Sekarang - https://daftar.com - API</code>\n\n"
+            "<i>Catatan: Kolom ke-3 opsional. Bisa diisi nama (PETIR, API, BERLIAN, ROKET, dll) atau angka Custom Emoji ID.</i>"
         )
 
     chat_key = parse_channel_id(first_line_parts[1])
     if chat_key is None:
-        return await message.reply_text(
-            "❌ ID channel harus berupa angka, contoh: <code>-1001234567890</code>"
+        return await safe_reply(
+            message,
+            f"<emoji id={AnimEmoji.SILANG}>❌</emoji> ID channel harus berupa angka, contoh: <code>-1001234567890</code>"
         )
 
     button_grid = []
     for line in lines[1:]:
         row = []
         for btn in line.split("|"):
-            if " - " in btn:
-                text, url = btn.split(" - ", 1)
-                text = text.strip()
-                url = clean_url(url)
+            parts = [p.strip() for p in btn.split(" - ") if p.strip()]
+            if len(parts) >= 2:
+                text = parts[0]
+                url = clean_url(parts[1])
+                emoji_id = None
+                if len(parts) >= 3:
+                    emoji_id = resolve_emoji_id(parts[2])
+                
                 if text and is_valid_url(url):
-                    row.append({"text": text, "url": url})
+                    btn_dict = {"text": text, "url": url}
+                    if emoji_id:
+                        btn_dict["emoji_id"] = emoji_id
+                    row.append(btn_dict)
         if row:
             button_grid.append(row)
 
     if not button_grid:
-        return await message.reply_text(
-            "❌ Format salah! Pastikan menggunakan pemisah spasi strip spasi: <code> - </code>"
+        return await safe_reply(
+            message,
+            f"<emoji id={AnimEmoji.SILANG}>❌</emoji> Format salah! Pastikan menggunakan pemisah spasi strip spasi: <code> - </code>"
         )
 
     await save_after_preview(
         message,
         chat_key,
         button_grid,
-        f"✅ <b>Tombol Channel Biasa Berhasil Disimpan!</b>\nChannel: <code>{chat_key}</code>\n\nPratinjau:",
+        f"<emoji id={AnimEmoji.CENTANG}>✅</emoji> <b>Tombol Channel Berhasil Disimpan!</b>\nChannel: <code>{chat_key}</code>\n\nPratinjau:",
     )
 
 
@@ -688,22 +828,23 @@ async def set_webapp_buttons_handler(client: Client, message: Message):
     parts = first_line.split()
 
     if len(parts) < 2 or len(lines) < 2:
-        return await message.reply_text(
-            "⚠️ <b>Format /setweb:</b>\n\n"
+        return await safe_reply(
+            message,
+            f"<emoji id={AnimEmoji.PERINGATAN}>⚠️️</emoji> <b>Format /setweb:</b>\n\n"
             "<code>/setweb -100xxxxxxxxxx [JUDUL | SUBTITLE | BADGE | URL_BACKGROUND]\n"
             "🔥 Join VIP - https://t.me/channel\n"
             "💎 Akses Bot - https://t.me/bot\n"
             "💬 Admin - https://t.me/admin</code>\n\n"
             "<i>Catatan:\n"
             "• URL_BACKGROUND bersifat opsional.\n"
-            "• Mau pakai foto langsung? Kirim foto dengan caption format di atas, "
-            "atau balas foto dengan perintah tersebut.</i>"
+            "• Mau pakai foto langsung? Kirim foto dengan caption format di atas, atau balas foto dengan perintah tersebut.</i>"
         )
 
     chat_key = parse_channel_id(parts[1])
     if chat_key is None:
-        return await message.reply_text(
-            "❌ ID channel harus berupa angka, contoh: <code>-1001234567890</code>"
+        return await safe_reply(
+            message,
+            f"<emoji id={AnimEmoji.SILANG}>❌</emoji> ID channel harus berupa angka, contoh: <code>-1001234567890</code>"
         )
 
     custom_title = "✦ PILIHAN AKSES VIP ✦"
@@ -733,20 +874,21 @@ async def set_webapp_buttons_handler(client: Client, message: Message):
                 webapp_items.append({"text": name, "url": link})
 
     if not webapp_items:
-        return await message.reply_text(
-            "❌ Format salah! Gunakan pemisah <code> - </code>."
+        return await safe_reply(
+            message,
+            f"<emoji id={AnimEmoji.SILANG}>❌</emoji> Format salah! Gunakan pemisah <code> - </code>."
         )
 
-    # Foto yang dikirim/di-reply MENGGANTIKAN URL background manual.
     temporary = False
     image_msg = find_image_message(message)
     if image_msg:
-        status_msg = await message.reply_text("⏳ <i>Mengunggah foto background...</i>")
+        status_msg = await safe_reply(message, f"<emoji id={AnimEmoji.JAM_PASIR}>⏳</emoji> <i>Mengunggah foto background...</i>")
         try:
             custom_bg, temporary = await upload_message_image(image_msg)
         except Exception as e:
-            return await status_msg.edit_text(
-                f"❌ Foto gagal diunggah, pengaturan <b>tidak disimpan</b>:\n<code>{esc(e)}</code>"
+            return await safe_edit(
+                status_msg,
+                f"<emoji id={AnimEmoji.SILANG}>❌</emoji> Foto gagal diunggah, pengaturan <b>tidak disimpan</b>:\n<code>{esc(e)}</code>"
             )
         await status_msg.delete()
 
@@ -760,7 +902,7 @@ async def set_webapp_buttons_handler(client: Client, message: Message):
 
     bg_info = f"<code>{esc(custom_bg)}</code>" if custom_bg else "<i>(Bawaan)</i>"
     text = (
-        "✅ <b>Tampilan WebApp Berhasil Disimpan!</b>\n\n"
+        f"<emoji id={AnimEmoji.CENTANG}>✅</emoji> <b>Tampilan WebApp Berhasil Disimpan!</b>\n\n"
         f"• <b>Badge:</b> <code>{esc(custom_badge)}</code>\n"
         f"• <b>Judul:</b> <code>{esc(custom_title)}</code>\n"
         f"• <b>Subjudul:</b> <code>{esc(custom_subtitle)}</code>\n"
@@ -779,21 +921,23 @@ async def set_webapp_buttons_handler(client: Client, message: Message):
 async def check_buttons_handler(client: Client, message: Message):
     args = message.text.split()
     if len(args) < 2:
-        return await message.reply_text(
+        return await safe_reply(
+            message,
             "Ketik: <code>/cekbutton &lt;ID_CHANNEL&gt;</code>"
         )
 
     chat_key = parse_channel_id(args[1])
     if chat_key is None:
-        return await message.reply_text("ID Channel harus berupa angka.")
+        return await safe_reply(message, f"<emoji id={AnimEmoji.SILANG}>❌</emoji> ID Channel harus berupa angka.")
 
     grid = get_all_data().get(chat_key)
     if not grid:
-        return await message.reply_text(
-            f"Belum ada tombol untuk channel <code>{chat_key}</code>."
+        return await safe_reply(
+            message,
+            f"<emoji id={AnimEmoji.INFO}>ℹ️</emoji> Belum ada tombol untuk channel <code>{chat_key}</code>."
         )
 
-    text = f"📌 <b>Tombol aktif channel</b> <code>{chat_key}</code>:"
+    text = f"<emoji id={AnimEmoji.BERLIAN}>💎</emoji> <b>Tombol aktif channel</b> <code>{chat_key}</code>:"
     payload = payload_from_grid(grid)
     if payload is not None:
         bg = payload.get("background")
@@ -802,10 +946,12 @@ async def check_buttons_handler(client: Client, message: Message):
         )
 
     try:
-        await message.reply_text(text, reply_markup=build_markup(grid))
+        markup = build_markup(grid)
+        await safe_reply(message, text, reply_markup=markup)
     except Exception as e:
-        await message.reply_text(
-            f"⚠️ Tombol tersimpan tapi ditolak Telegram:\n<code>{esc(e)}</code>"
+        await safe_reply(
+            message,
+            f"<emoji id={AnimEmoji.PERINGATAN}>⚠️</emoji> Tombol tersimpan tapi ditolak Telegram:\n<code>{esc(e)}</code>"
         )
 
 
@@ -814,7 +960,8 @@ async def check_buttons_handler(client: Client, message: Message):
 async def delete_buttons_handler(client: Client, message: Message):
     args = message.text.split()
     if len(args) < 2:
-        return await message.reply_text(
+        return await safe_reply(
+            message,
             "Ketik: <code>/delbutton &lt;ID_CHANNEL&gt;</code>"
         )
 
@@ -824,11 +971,12 @@ async def delete_buttons_handler(client: Client, message: Message):
     if ch_id in data:
         del data[ch_id]
         save_all_data(data)
-        await message.reply_text(
-            f"🗑️ Tombol channel <code>{esc(ch_id)}</code> berhasil dihapus."
+        await safe_reply(
+            message,
+            f"<emoji id={AnimEmoji.SAMPAH}>🗑</emoji> Tombol channel <code>{esc(ch_id)}</code> berhasil dihapus."
         )
     else:
-        await message.reply_text(f"Channel <code>{esc(ch_id)}</code> tidak ditemukan.")
+        await safe_reply(message, f"<emoji id={AnimEmoji.PERINGATAN}>⚠️</emoji> Channel <code>{esc(ch_id)}</code> tidak ditemukan.")
 
 
 # ================= DAFTAR CHANNEL =================
@@ -836,9 +984,9 @@ async def delete_buttons_handler(client: Client, message: Message):
 async def list_channel_handler(client: Client, message: Message):
     data = get_all_data()
     if not data:
-        return await message.reply_text("Belum ada channel terdaftar.")
+        return await safe_reply(message, f"<emoji id={AnimEmoji.INFO}>ℹ️</emoji> Belum ada channel terdaftar.")
 
-    text = "📋 <b>Channel dengan Tombol Aktif:</b>\n\n"
+    text = f"<emoji id={AnimEmoji.MEGAPHONE}>📣</emoji> <b>Channel dengan Tombol Aktif:</b>\n\n"
     for ch_id, grid in data.items():
         payload = payload_from_grid(grid)
         if payload is None:
@@ -848,7 +996,7 @@ async def list_channel_handler(client: Client, message: Message):
         else:
             kind = "WebApp"
         text += f"• <code>{esc(ch_id)}</code> — <i>{kind}</i>\n"
-    await message.reply_text(text)
+    await safe_reply(message, text)
 
 
 # ================= AUTO ATTACH CHANNEL =================
@@ -882,5 +1030,5 @@ async def auto_button_channel(client: Client, message: Message):
 
 
 if __name__ == "__main__":
-    print("Bot Pengatur Tombol Aktif...")
+    print("Bot Pengatur Tombol Aktif (pyrogram_styled)...")
     app.run()
