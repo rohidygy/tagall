@@ -1,35 +1,48 @@
 import asyncio
+import html
 import json
 import logging
 import os
+import re
+import shutil
+import sys
+import urllib.parse
+from typing import Any, Optional, Tuple
 
+import aiohttp
 from pyrogram_styled import Client, filters, idle
-from pyrogram_styled.enums import ParseMode
+from pyrogram_styled.enums import ChatType, ParseMode
+from pyrogram_styled.errors import FloodWait, MessageNotModified
 from pyrogram_styled.helpers.helpers import ikb
-from pyrogram_styled.types import (InlineKeyboardButton, InlineKeyboardMarkup,
-                                   InlineQuery, InlineQueryResultArticle,
-                                   InputTextMessageContent, Message)
+from pyrogram_styled.raw import functions
+from pyrogram_styled.types import (
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    InlineQuery,
+    InlineQueryResultArticle,
+    InputTextMessageContent,
+    Message,
+)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-
-# ================= DAFTAR ANIMATED EMOJI =================
+# ================= DAFTAR ANIMATED CUSTOM EMOJI =================
 class AnimEmoji:
-    PETIR: int = 5431449001532594346  # ⚡️
-    BERLIAN: int = 5471952986970267163  # 💎
-    API: int = 5420315771991497307  # 🔥
-    ROKET: int = 5445284980978621387  # 🚀
-    TAUTAN: int = 5375129357373165375  # 🔗
-    CHAT: int = 5465300082628763143  # 💬
-
+    PETIR: int = 5431449001532594346      # ⚡️
+    BERLIAN: int = 5471952986970267163    # 💎
+    API: int = 5420315771991497307        # 🔥
+    ROKET: int = 5445284980978621387      # 🚀
+    TAUTAN: int = 5375129357373165375     # 🔗
+    CHAT: int = 5465300082628763143       # 💬
 
 AUTO_EMOJIS = [
     AnimEmoji.API,
     AnimEmoji.PETIR,
     AnimEmoji.BERLIAN,
     AnimEmoji.ROKET,
+    AnimEmoji.TAUTAN,
+    AnimEmoji.CHAT,
 ]
-
 
 # ================= KONFIGURASI ENV =================
 def _load_env_file(path: str):
@@ -43,7 +56,6 @@ def _load_env_file(path: str):
             key, value = line.split("=", 1)
             os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
 
-
 _load_env_file(os.path.join(BASE_DIR, ".env"))
 
 API_ID = int(os.environ.get("API_ID", 0))
@@ -54,9 +66,7 @@ USER_SESSION = os.environ.get("USER_SESSION", "").strip()
 
 DATA_FILE = os.path.join(BASE_DIR, "channel_buttons.json")
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 app = Client(
     "channel_button_manager",
@@ -75,8 +85,7 @@ if USER_SESSION:
         session_string=USER_SESSION,
     )
 
-
-# ================= DATABASE =================
+# ================= DATABASE HANDLER =================
 def get_all_data() -> dict:
     if not os.path.exists(DATA_FILE):
         return {}
@@ -86,18 +95,15 @@ def get_all_data() -> dict:
     except Exception:
         return {}
 
-
 def save_all_data(data: dict):
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=4, ensure_ascii=False)
-
 
 def get_channel_grid(chat_id: int):
     data = get_all_data()
     raw = str(chat_id)
     clean = raw.replace("-100", "").replace("-", "")
-    return data.get(raw) or data.get(f"-100{clean}") or data.get(clean)
-
+    return data.get(raw) or data.get(f"-100{clean}") or data.get(f"-{clean}") or data.get(clean)
 
 def build_styled_markup(grid: list) -> InlineKeyboardMarkup:
     styled_rows = []
@@ -106,11 +112,9 @@ def build_styled_markup(grid: list) -> InlineKeyboardMarkup:
         s_row = []
         p_row = []
         for c_idx, item in enumerate(row):
-            text = item.get("text", "")
-            url = item.get("url", "")
-            eid = (
-                item.get("emoji_id") or AUTO_EMOJIS[(r_idx + c_idx) % len(AUTO_EMOJIS)]
-            )
+            text = item.get("text", "").strip()
+            url = item.get("url", "").strip()
+            eid = item.get("emoji_id") or AUTO_EMOJIS[(r_idx + c_idx) % len(AUTO_EMOJIS)]
             p_row.append(InlineKeyboardButton(text=text, url=url))
             s_row.append((f" {text} ", url, int(eid), "primary"))
         styled_rows.append(s_row)
@@ -120,8 +124,7 @@ def build_styled_markup(grid: list) -> InlineKeyboardMarkup:
     except Exception:
         return InlineKeyboardMarkup(plain_rows)
 
-
-# ================= COMMAND ADMIN =================
+# ================= COMMAND /SETBUTTON =================
 @app.on_message(filters.private & filters.command("setbutton") & filters.user(OWNER_ID))
 async def set_button_cmd(client: Client, message: Message):
     lines = [line.strip() for line in message.text.splitlines() if line.strip()]
@@ -133,7 +136,7 @@ async def set_button_cmd(client: Client, message: Message):
             "LIVE NYA DISINI - https://link1.com\n"
             "VVIP NYA DISINI - https://link2.com</code>"
         )
-
+    
     chat_key = first_parts[1].strip()
     grid = []
     for line in lines[1:]:
@@ -141,136 +144,181 @@ async def set_button_cmd(client: Client, message: Message):
         for b in line.split("|"):
             if " - " in b:
                 txt, url = b.split(" - ", 1)
-                row.append({"text": txt.strip(), "url": url.strip()})
+                txt = txt.strip()
+                url = url.strip()
+                if not re.match(r"^[a-zA-Z][a-zA-Z0-9+.\-]*://", url):
+                    url = "https://" + url
+                row.append({"text": txt, "url": url})
         if row:
             grid.append(row)
+    
+    if not grid:
+        return await message.reply("❌ Format salah! Gunakan pemisah: <code> - </code>")
 
     data = get_all_data()
     data[chat_key] = grid
     save_all_data(data)
-
+    
     markup = build_styled_markup(grid)
     await message.reply(
-        f"✅ <b>Tombol Disimpan!</b> Channel: <code>{chat_key}</code>\n\nPratinjau:",
-        reply_markup=markup,
+        f"✅ <b>Tombol Berhasil Disimpan &amp; Siap Bergerak!</b>\n"
+        f"Channel: <code>{chat_key}</code>\n\nPratinjau:",
+        reply_markup=markup
     )
 
-
-# ================= INLINE QUERY HANDLER (KUNCI ANIMASI) =================
-@app.on_inline_query()
-async def inline_button_provider(client: Client, inline_query: InlineQuery):
-    q = inline_query.query.strip()
-    if not q:
-        return
-
-    grid = get_channel_grid(int(q)) if q.lstrip("-").isdigit() else None
+@app.on_message(filters.private & filters.command("cekbutton") & filters.user(OWNER_ID))
+async def cek_button_cmd(client: Client, message: Message):
+    args = message.text.split()
+    if len(args) < 2:
+        return await message.reply("Ketik: <code>/cekbutton &lt;ID_CHANNEL&gt;</code>")
+    
+    ch_key = args[1].strip()
+    grid = get_channel_grid(int(ch_key)) if ch_key.lstrip("-").isdigit() else None
     if not grid:
-        return
-
+        return await message.reply(f"ℹ️ Belum ada tombol untuk channel <code>{ch_key}</code>.")
+    
     markup = build_styled_markup(grid)
-    results = [
-        InlineQueryResultArticle(
-            id=f"btn_{q}",
-            title="Tempel Tombol Bergerak",
-            input_message_content=InputTextMessageContent("."),
-            reply_markup=markup,
+    await message.reply(f"💎 <b>Tombol aktif channel</b> <code>{ch_key}</code>:", reply_markup=markup)
+
+@app.on_message(filters.private & filters.command("delbutton") & filters.user(OWNER_ID))
+async def del_button_cmd(client: Client, message: Message):
+    args = message.text.split()
+    if len(args) < 2:
+        return await message.reply("Ketik: <code>/delbutton &lt;ID_CHANNEL&gt;</code>")
+    
+    ch_id = args[1].strip()
+    data = get_all_data()
+    if ch_id in data:
+        del data[ch_id]
+        save_all_data(data)
+        await message.reply(f"🗑 Tombol channel <code>{ch_id}</code> berhasil dihapus.")
+    else:
+        await message.reply(f"⚠️ Channel <code>{ch_id}</code> tidak ditemukan.")
+
+# ================= GIT UPDATE & RESTART =================
+def restart_process():
+    os.execl(sys.executable, sys.executable, *sys.argv)
+
+@app.on_message(filters.private & filters.command(["update", "gitpull"]) & filters.user(OWNER_ID))
+async def git_pull_cmd(client: Client, message: Message):
+    msg = await message.reply("⚡ <i>Menarik pembaruan dari Git...</i>")
+    try:
+        proc = await asyncio.create_subprocess_shell(
+            "git fetch --all && git reset --hard origin/$(git rev-parse --abbrev-ref HEAD)",[cite: 1]
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            cwd=BASE_DIR,
         )
-    ]
-    await inline_query.answer(results, cache_time=1)
+        stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=30)
+        output = stdout.decode().strip() or stderr.decode().strip()
+        await msg.edit(f"⭐️ <b>Git Output:</b>\n<code>{output}</code>\n\n<i>Restarting...</i>")
+        await asyncio.sleep(1.5)
+        restart_process()
+    except Exception as e:
+        await msg.edit(f"❌ Gagal update: <code>{e}</code>")
 
+@app.on_message(filters.private & filters.command("restart") & filters.user(OWNER_ID))
+async def restart_cmd(client: Client, message: Message):
+    await message.reply("⚡️ <b>Memulai ulang bot...</b>")
+    await asyncio.sleep(1)
+    restart_process()
 
-# ================= AUTO ATTACH VIA USERBOT INLINE =================
-_PROCESSED = set()
+# ================= EKSEKUSI RAW INJEKSI TOMBOL ANIMASI =================
+_PROCESSED_MSGS = set()
 
-
-async def handle_post(client: Client, message: Message):
+async def attach_animated_buttons(message: Message, source: str):
     if not message or getattr(message, "empty", False) or message.service:
         return
 
     cid = message.chat.id
     mid = message.id
-    key = f"{cid}_{mid}"
-    if key in _PROCESSED:
+    key_event = f"{cid}_{mid}"
+
+    if key_event in _PROCESSED_MSGS:
         return
-    _PROCESSED.add(key)
+    _PROCESSED_MSGS.add(key_event)
 
     grid = get_channel_grid(cid)
     if not grid:
         return
 
-    markup = build_styled_markup(grid)
-    await asyncio.sleep(0.5)
+    print(f"\n[EVENT] Postingan baru via {source}! Channel: {cid} | Msg ID: {mid}")
+    await asyncio.sleep(0.4)
 
-    # 1. Edit via Userbot Premium langsung
+    styled_markup = build_styled_markup(grid)
     applied = False
+
+    # 1. Eksekusi lewat Userbot Premium dengan Raw MTProto EditMessage
     if user_client:
         try:
-            bot_user = await app.get_me()
-            # Panggil inline bot dari Userbot
-            inline_res = await user_client.get_inline_bot_results(
-                bot_user.username, str(cid)
+            peer = await user_client.resolve_peer(cid)
+            raw_markup = await styled_markup.write(user_client)
+            
+            await user_client.invoke(
+                functions.messages.EditMessage(
+                    peer=peer,
+                    id=mid,
+                    reply_markup=raw_markup
+                )
             )
-            if inline_res and inline_res.results:
-                # Ambil reply_markup ber-emoji yang di-generate inline
-                target_markup = inline_res.results[0].send_message.reply_markup
-                await user_client.edit_message_reply_markup(
-                    chat_id=cid, message_id=mid, reply_markup=target_markup
-                )
-                applied = True
-                print(
-                    f"🔥 [SUCCESS] Tombol Animasi BERGERAK Berhasil via Userbot Inline di ID {mid}!"
-                )
-        except Exception as e:
-            print(f"⚠️ Userbot Inline gagal: {e}")
+            applied = True
+            print(f"🔥 [SUCCESS] Tombol Animasi BERGERAK Berhasil dipasang via Userbot di ID {mid}!")
+        except FloodWait as flood:
+            await asyncio.sleep(flood.value)
             try:
-                # Fallback manual userbot styled markup
-                await user_client.edit_message_reply_markup(
-                    chat_id=cid, message_id=mid, reply_markup=markup
-                )
+                peer = await user_client.resolve_peer(cid)
+                raw_markup = await styled_markup.write(user_client)
+                await user_client.invoke(functions.messages.EditMessage(peer=peer, id=mid, reply_markup=raw_markup))
                 applied = True
-                print(
-                    f"🔥 [SUCCESS] Tombol Animasi Berhasil via Direct Userbot di ID {mid}!"
-                )
-            except Exception as e2:
-                print(f"⚠️ Userbot Direct gagal: {e2}")
+                print(f"🔥 [SUCCESS] Tombol Animasi Berhasil dipasang setelah wait di ID {mid}!")
+            except Exception as fe:
+                print(f"⚠️ Userbot FloodWait Retry Gagal: {fe}")
+        except MessageNotModified:
+            applied = True
+            print(f"🔥 [SUCCESS] Tombol sudah terpasang di ID {mid}.")
+        except Exception as e:
+            print(f"⚠️ [FAIL-USERBOT] Userbot MTProto: {e} -> Beralih ke fallback BotFather...")
 
-    # 2. Fallback BotFather jika userbot gagal
+    # 2. Fallback via BotFather jika Userbot gagal
     if not applied:
         try:
             await app.edit_message_reply_markup(
-                chat_id=cid, message_id=mid, reply_markup=markup
+                chat_id=cid,
+                message_id=mid,
+                reply_markup=styled_markup
             )
-            print(f"✅ Tombol dipasang via BotFather di ID {mid}!")
-        except Exception as err:
-            print(f"❌ BotFather gagal: {err}")
+            print(f"✅ [SUCCESS] Tombol cadangan dipasang via BotFather di ID {mid}!")
+        except MessageNotModified:
+            pass
+        except Exception as be:
+            print(f"❌ [FAIL-BOT] BotFather juga gagal: {be}")
 
-
+# Listener ganda (BotFather & Userbot)
 @app.on_message(filters.channel)
-async def bot_listener(_: Client, m: Message):
-    await handle_post(app, m)
-
+async def bot_channel_listener(_: Client, m: Message):
+    await attach_animated_buttons(m, "BotFather")
 
 def setup_userbot():
     if user_client:
-
         @user_client.on_message(filters.channel)
-        async def user_listener(_: Client, m: Message):
-            await handle_post(user_client, m)
+        async def userbot_channel_listener(_: Client, m: Message):
+            await attach_animated_buttons(m, "Userbot")
 
-
-# ================= RUNNER =================
+# ================= MAIN RUNNER =================
 async def main():
     await app.start()
-    print("BotFather Aktif.")
+    logging.info("Bot Father Client aktif.")
+
     if user_client:
         await user_client.start()
         setup_userbot()
-        print("Userbot Premium Aktif.")
+        logging.info("Userbot Bridge Premium (MTProto Mode) Aktif & Listener Siap!")
+
     await idle()
+
     if user_client:
         await user_client.stop()
     await app.stop()
-
 
 if __name__ == "__main__":
     app.run(main())
